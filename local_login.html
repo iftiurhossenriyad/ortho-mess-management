@@ -1,0 +1,76 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Local Sign In | Ortho</title>
+    <style>
+        :root { --forest: #1b4332; --ink: #17212b; --muted: #64748b; --line: #e2e8f0; }
+        * { box-sizing: border-box; }
+        body { margin: 0; min-height: 100vh; display: grid; place-items: center; padding: 24px; color: var(--ink); font-family: Arial, sans-serif; background: #f3f7f4; }
+        .card { width: min(100%, 430px); padding: 34px; border: 1px solid #e2ebe5; border-radius: 16px; background: #fff; box-shadow: 0 20px 45px rgba(27,67,50,.1); }
+        .logo { display: block; width: 86px; height: 86px; margin: 0 auto 18px; object-fit: contain; border-radius: 12px; }
+        h1 { margin: 0; color: var(--ink); font: 500 30px Georgia, serif; text-align: center; }
+        .sub { margin: 9px 0 25px; color: var(--muted); font-size: 13px; text-align: center; }
+        form { display: grid; gap: 15px; }
+        label { display: grid; gap: 7px; color: #334155; font-size: 12px; font-weight: 700; }
+        input { width: 100%; min-height: 48px; padding: 12px 13px; border: 1px solid var(--line); border-radius: 10px; outline: none; font-size: 14px; }
+        input:focus { border-color: var(--forest); box-shadow: 0 0 0 3px rgba(27,67,50,.1); }
+        .password-wrap { position: relative; }
+        .password-wrap input { padding-right: 48px; }
+        .password-toggle { position: absolute; top: 50%; right: 10px; width: 32px; min-height: 32px; padding: 0; color: #64748b; background: transparent; transform: translateY(-50%); }
+        .password-toggle:hover { color: var(--forest); background: transparent; }
+        .password-toggle svg { width: 18px; height: 18px; }
+        button { min-height: 49px; border: 0; border-radius: 10px; color: white; background: var(--forest); cursor: pointer; font-weight: 700; }
+        button:hover { background: #123524; }
+        .message { margin: 0 0 16px; padding: 11px; border-radius: 8px; color: #9b3d30; background: #fff0eb; font-size: 13px; line-height: 1.4; }
+        .message:empty { display: none; }
+        .back { display: block; margin-top: 20px; color: var(--forest); font-size: 12px; font-weight: 700; text-align: center; text-decoration: none; }
+        .forgot-link { display: block; margin: -5px auto 2px; color: var(--forest); font-size: 12px; font-weight: 700; text-align: center; text-decoration: none; }
+        .forgot-link:hover, .back:hover { text-decoration: underline; }
+        .hint { margin: 18px 0 0; color: #94a3b8; font-size: 11px; line-height: 1.5; text-align: center; }
+    </style>
+</head>
+<body>
+    <main class="card">
+        <img class="logo" src="Logo.jpeg" alt="Ortho logo">
+        <h1>Local dashboard sign in</h1>
+        <p class="sub">Use your Mess ID/code, User ID/phone, and password to continue.</p>
+        <p id="message" class="message"></p>
+        <form id="login-form">
+            <label>Mess ID or Mess Code <input id="mess-id" type="text" placeholder="ORTHO-MESS-0001" autocomplete="organization" required></label>
+            <label>User ID or Phone Number <input id="phone" type="text" placeholder="ORTHO-1-0002 or phone" autocomplete="username" required></label>
+            <label>Password <div class="password-wrap"><input id="password" type="password" placeholder="Enter password" autocomplete="current-password" required><button id="password-toggle" class="password-toggle" type="button" aria-label="Show password"></button></div></label>
+            <a id="forgot-link" class="forgot-link" href="forgot_password.html">Forgot password?</a>
+            <button type="submit">Sign In</button>
+        </form>
+        <a class="back" href="login.html">Back to social sign in</a>
+        <a class="back" href="register.html">Create a new account</a>
+        <p class="hint">Admin and member access are controlled by the role saved for each account.</p>
+    </main>
+    <script>
+        const password = document.getElementById('password');
+        const passwordToggle = document.getElementById('password-toggle');
+        const eye = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M2.5 12s3.5-6 9.5-6 9.5 6 9.5 6-3.5 6-9.5 6-9.5-6-9.5-6Z"></path><circle cx="12" cy="12" r="2.5"></circle></svg>';
+        const eyeOff = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="m3 3 18 18"></path><path d="M10.6 6.2A10.5 10.5 0 0 1 12 6c6 0 9.5 6 9.5 6a17.8 17.8 0 0 1-3.1 3.8M6.2 6.3C3.8 8 2.5 12 2.5 12s3.5 6 9.5 6c1.2 0 2.3-.2 3.2-.6"></path></svg>';
+        passwordToggle.innerHTML = eye;
+        passwordToggle.addEventListener('click', () => {
+            const isVisible = password.type === 'text';
+            password.type = isVisible ? 'password' : 'text';
+            passwordToggle.innerHTML = isVisible ? eye : eyeOff;
+            passwordToggle.setAttribute('aria-label', isVisible ? 'Show password' : 'Hide password');
+        });
+        document.getElementById('login-form').addEventListener('submit', async (event) => {
+            event.preventDefault();
+            const message = document.getElementById('message');
+            message.textContent = '';
+            try {
+                const response = await fetch('local_auth.php', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ action: 'login', mess_id: document.getElementById('mess-id').value.trim(), phone: document.getElementById('phone').value.trim(), password: document.getElementById('password').value }) });
+                const result = await response.json();
+                if (result.status !== 'success') throw new Error(result.message || 'Sign in failed.');
+                window.location.href = 'index.html';
+            } catch (error) { message.textContent = error.message; }
+        });
+    </script>
+</body>
+</html>

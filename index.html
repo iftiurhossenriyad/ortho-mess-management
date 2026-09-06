@@ -1,0 +1,771 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Ortho - Mess Management System</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        @media print {
+            /* Hide action forms and buttons during print/PDF generation */
+            .action-forms-section, button, select, th:last-child, td:last-child {
+                display: none !important;
+            }
+            body {
+                background-color: white !important;
+                padding: 0 !important;
+            }
+            .shadow-sm {
+                box-shadow: none !important;
+            }
+            .border {
+                border: 1px solid #e5e7eb !important;
+            }
+            body.print-summary #app-shell > *:not(#summary-section),
+            body.print-transactions #app-shell > *:not(#transactions-section),
+            body.print-daily-history #app-shell > *:not(#daily-history-section),
+            body.print-member-details #app-shell > *:not(#member-details-section) {
+                display: none !important;
+            }
+            body.print-summary #summary-section,
+            body.print-transactions #transactions-section,
+            body.print-daily-history #daily-history-section,
+            body.print-member-details #member-details-section {
+                display: block !important;
+                width: 100% !important;
+                max-width: none !important;
+                margin: 0 !important;
+            }
+            body.print-daily-history #member-details-section {
+                display: none !important;
+            }
+            body.print-member-details #app-shell > * {
+                display: none !important;
+            }
+            body.print-member-details #app-shell > #daily-history-section {
+                display: block !important;
+            }
+            body.print-member-details #daily-history-section > * {
+                display: none !important;
+            }
+            body.print-member-details #daily-history-section > #member-details-section {
+                display: block !important;
+                width: 100% !important;
+                margin: 0 !important;
+                border: 0 !important;
+            }
+        }
+    </style>
+</head>
+<body class="bg-gray-100 font-sans p-4 md:p-8">
+
+    <div id="app-shell" class="max-w-4xl mx-auto space-y-6">
+        <!-- Header -->
+        <div class="flex justify-between items-center bg-white p-6 rounded-xl shadow-sm border border-gray-200">
+            <div>
+                <h1 class="text-2xl font-bold text-gray-800">Ortho Dashboard</h1>
+                <p class="text-sm text-gray-500">Mess ID: <span id="mess-id-display" class="font-semibold text-indigo-600">Loading...</span></p>
+            </div>
+            <div class="flex items-center gap-3">
+                <span id="session-user" class="hidden text-xs text-gray-500 md:inline"></span>
+                <button id="return-admin" onclick="returnToAdmin()" class="hidden bg-amber-100 text-amber-800 px-3 py-2 rounded-lg text-xs hover:bg-amber-200 transition">Return to Admin</button>
+                <button onclick="loadAllData()" class="bg-indigo-600 text-white px-4 py-2 rounded-lg text-sm hover:bg-indigo-700 transition">Refresh Data</button>
+                <button onclick="logout()" class="bg-gray-100 text-gray-700 px-3 py-2 rounded-lg text-xs hover:bg-gray-200 transition">Log out</button>
+            </div>
+        </div>
+        <p id="app-status" class="hidden rounded-lg border px-4 py-3 text-sm"></p>
+
+        <!-- Metric Cards -->
+        <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
+            <div class="bg-white p-5 rounded-xl shadow-sm border border-gray-200 text-center">
+                <p class="text-xs font-semibold text-gray-400 uppercase">Total Meals</p>
+                <p id="total-meals" class="text-2xl font-bold text-gray-800 mt-1">0</p>
+            </div>
+            <div class="bg-white p-5 rounded-xl shadow-sm border border-gray-200 text-center">
+                <p class="text-xs font-semibold text-gray-400 uppercase">Total Expense</p>
+                <p id="total-expense" class="text-2xl font-bold text-gray-800 mt-1">BDT 0</p>
+            </div>
+            <div class="bg-white p-5 rounded-xl shadow-sm border border-gray-200 text-center">
+                <p class="text-xs font-semibold text-gray-400 uppercase">Total Deposit</p>
+                <p id="total-deposit" class="text-2xl font-bold text-gray-800 mt-1">BDT 0</p>
+            </div>
+            <div class="bg-white p-5 rounded-xl shadow-sm border border-gray-200 text-center bg-indigo-50 border-indigo-100">
+                <p class="text-xs font-semibold text-indigo-500 uppercase">Meal Rate</p>
+                <p id="meal-rate" class="text-2xl font-bold text-indigo-600 mt-1">BDT 0</p>
+            </div>
+        </div>
+
+        <!-- Action Forms Section -->
+        <div class="action-forms-section grid grid-cols-1 md:grid-cols-3 gap-6">
+            <!-- Daily Meal Input -->
+            <div class="bg-white p-6 rounded-xl shadow-sm border border-gray-200">
+                <h2 class="text-lg font-bold text-gray-800 mb-4">Daily Meal Input</h2>
+                <form id="meal-form" class="space-y-3">
+                    <div>
+                        <label class="block text-xs font-medium text-gray-600 mb-1">Select Member</label>
+                        <select id="meal-user-id" class="user-select w-full p-2 border rounded-lg text-gray-700 bg-white focus:outline-indigo-500"></select>
+                    </div>
+                    <div>
+                        <label class="block text-xs font-medium text-gray-600 mb-1">Meal Date</label>
+                        <input type="date" id="meal-date" required class="w-full p-2 border rounded-lg text-gray-700 focus:outline-indigo-500">
+                    </div>
+                    <div class="grid grid-cols-3 gap-2">
+                        <div>
+                            <label class="block text-xs font-medium text-gray-600 mb-1">Breakfast</label>
+                            <input type="number" step="0.5" id="breakfast" value="1" class="w-full p-2 border rounded-lg text-center font-bold text-gray-700 focus:outline-indigo-500">
+                        </div>
+                        <div>
+                            <label class="block text-xs font-medium text-gray-600 mb-1">Lunch</label>
+                            <input type="number" step="0.5" id="lunch" value="1" class="w-full p-2 border rounded-lg text-center font-bold text-gray-700 focus:outline-indigo-500">
+                        </div>
+                        <div>
+                            <label class="block text-xs font-medium text-gray-600 mb-1">Dinner</label>
+                            <input type="number" step="0.5" id="dinner" value="1" class="w-full p-2 border rounded-lg text-center font-bold text-gray-700 focus:outline-indigo-500">
+                        </div>
+                    </div>
+                    <button type="submit" class="w-full bg-green-600 text-white py-2.5 rounded-lg font-semibold hover:bg-green-700 transition">Save Meal Entry</button>
+                </form>
+            </div>
+
+            <!-- Add Transaction Form -->
+            <div class="bg-white p-6 rounded-xl shadow-sm border border-gray-200">
+                <h2 class="text-lg font-bold text-gray-800 mb-4">Add Transaction</h2>
+                <form id="transaction-form" class="space-y-3">
+                    <div>
+                        <label class="block text-xs font-medium text-gray-600 mb-1">Select Member</label>
+                        <select id="tx-user-id" class="user-select w-full p-2 border rounded-lg text-gray-700 bg-white focus:outline-indigo-500"></select>
+                    </div>
+                    <div class="grid grid-cols-2 gap-2">
+                        <div>
+                            <label class="block text-xs font-medium text-gray-600 mb-1">Type</label>
+                            <select id="tx-type" class="w-full p-2 border rounded-lg text-gray-700 bg-white focus:outline-indigo-500">
+                                <option value="bazaar">Bazaar Exp</option>
+                                <option value="utility">Utility Bill</option>
+                                <option value="deposit">Deposit Money</option>
+                            </select>
+                        </div>
+                        <div>
+                            <label class="block text-xs font-medium text-gray-600 mb-1">Amount (BDT)</label>
+                            <input type="number" step="0.01" id="tx-amount" required placeholder="0.00" class="w-full p-2 border rounded-lg text-gray-700 focus:outline-indigo-500">
+                        </div>
+                    </div>
+                    <div>
+                        <label class="block text-xs font-medium text-gray-600 mb-1">Transaction Date</label>
+                        <input type="date" id="tx-date" required class="w-full p-2 border rounded-lg text-gray-700 focus:outline-indigo-500">
+                    </div>
+                    <div>
+                        <label class="block text-xs font-medium text-gray-600 mb-1">Description</label>
+                        <input type="text" id="tx-title" placeholder="e.g., Rice, Meat" class="w-full p-2 border rounded-lg text-gray-700 focus:outline-indigo-500">
+                    </div>
+                    <button type="submit" class="w-full bg-indigo-600 text-white py-2.5 rounded-lg font-semibold hover:bg-indigo-700 transition">Add Transaction</button>
+                </form>
+            </div>
+
+            <!-- Add New Member Form -->
+            <div class="bg-white p-6 rounded-xl shadow-sm border border-gray-200">
+                <h2 class="text-lg font-bold text-gray-800 mb-4">Add New Member</h2>
+                <form id="add-member-form" class="space-y-3">
+                    <div>
+                        <label class="block text-xs font-medium text-gray-600 mb-1">Full Name</label>
+                        <input type="text" id="new-member-name" required placeholder="Member Name" class="w-full p-2 border rounded-lg text-gray-700 focus:outline-indigo-500">
+                    </div>
+                    <div>
+                        <label class="block text-xs font-medium text-gray-600 mb-1">Phone Number</label>
+                        <input type="text" id="new-member-phone" placeholder="01700000000" class="w-full p-2 border rounded-lg text-gray-700 focus:outline-indigo-500">
+                    </div>
+                    <button type="submit" class="w-full bg-blue-600 text-white py-2.5 rounded-lg font-semibold hover:bg-blue-700 transition mt-2">Add Member</button>
+                </form>
+            </div>
+        </div>
+
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div id="my-password-panel" class="bg-white p-6 rounded-xl shadow-sm border border-gray-200">
+                <h2 class="text-lg font-bold text-gray-800 mb-1">My Password</h2>
+                <p class="text-xs text-gray-500 mb-4">Change your own dashboard password.</p>
+                <form id="change-password-form" class="space-y-3">
+                    <input id="current-password" type="password" required placeholder="Current password" class="w-full p-2 border rounded-lg text-gray-700">
+                    <input id="new-password" type="password" required minlength="8" placeholder="New password (8+ characters)" class="w-full p-2 border rounded-lg text-gray-700">
+                    <input id="confirm-password" type="password" required minlength="8" placeholder="Confirm new password" class="w-full p-2 border rounded-lg text-gray-700">
+                    <button type="submit" class="w-full bg-green-600 text-white py-2.5 rounded-lg font-semibold hover:bg-green-700 transition">Change Password</button>
+                </form>
+            </div>
+            <div id="admin-password-panel" class="bg-white p-6 rounded-xl shadow-sm border border-gray-200">
+                <h2 class="text-lg font-bold text-gray-800 mb-1">Manage User Passwords</h2>
+                <p class="text-xs text-gray-500 mb-4">Generate a temporary password for a member.</p>
+                <form id="admin-reset-password-form" class="space-y-3">
+                    <select id="password-user-id" class="w-full p-2 border rounded-lg text-gray-700"></select>
+                    <button type="submit" class="w-full bg-indigo-600 text-white py-2.5 rounded-lg font-semibold hover:bg-indigo-700 transition">Generate Temporary Password</button>
+                </form>
+                <p id="temporary-password-result" class="hidden mt-3 rounded-lg bg-indigo-50 border border-indigo-100 p-3 text-sm text-indigo-800"></p>
+                <form id="switch-user-form" class="mt-5 pt-5 border-t border-gray-100 space-y-3">
+                    <p class="text-xs text-gray-500">View the dashboard as another user.</p>
+                    <select id="switch-user-id" class="w-full p-2 border rounded-lg text-gray-700"></select>
+                    <button type="submit" class="w-full bg-amber-600 text-white py-2.5 rounded-lg font-semibold hover:bg-amber-700 transition">Login as This User</button>
+                </form>
+            </div>
+        </div>
+
+        <!-- Member Financial Summary Table -->
+        <div id="summary-section" class="bg-white p-6 rounded-xl shadow-sm border border-gray-200">
+            <div class="flex justify-between items-center mb-4">
+                <h2 class="text-lg font-bold text-gray-800">Member Financial Summary</h2>
+                <button onclick="printSection('summary')" class="bg-gray-800 text-white px-3 py-1.5 rounded-lg text-xs font-semibold hover:bg-gray-900 transition flex items-center gap-1">
+                    🖨️ Print Summary
+                </button>
+            </div>
+            <div class="overflow-x-auto">
+                <table class="w-full text-left border-collapse">
+                    <thead>
+                        <tr class="border-b text-xs font-semibold text-gray-400 uppercase">
+                                <th class="py-3">Member</th>
+                            <th class="py-3 text-center">Meals</th>
+                            <th class="py-3 text-center">Deposit</th>
+                            <th class="py-3 text-center">Cost</th>
+                            <th class="py-3 text-right">Balance</th>
+                        </tr>
+                    </thead>
+                    <tbody id="summary-table-body" class="divide-y divide-gray-100 text-sm"></tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- Recent Transactions Log Table -->
+        <div id="transactions-section" class="bg-white p-6 rounded-xl shadow-sm border border-gray-200">
+            <div class="flex justify-between items-center mb-4">
+                <h2 class="text-lg font-bold text-gray-800">Recent Transactions</h2>
+                <button onclick="printSection('transactions')" class="bg-gray-800 text-white px-3 py-1.5 rounded-lg text-xs font-semibold hover:bg-gray-900 transition">🖨️ Print Transactions</button>
+            </div>
+            <div class="overflow-x-auto">
+                <table class="w-full text-left border-collapse">
+                    <thead>
+                        <tr class="border-b text-xs font-semibold text-gray-400 uppercase">
+                            <th class="py-3">Member</th>
+                            <th class="py-3">Date</th>
+                            <th class="py-3">Type</th>
+                            <th class="py-3">Description</th>
+                            <th class="py-3 text-right">Amount</th>
+                            <th class="py-3 text-right">Action</th>
+                        </tr>
+                    </thead>
+                    <tbody id="transactions-table-body" class="divide-y divide-gray-100 text-sm"></tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- Daily Meal History -->
+        <div id="daily-history-section" class="bg-white p-6 rounded-xl shadow-sm border border-gray-200">
+            <div class="flex flex-col gap-3 md:flex-row md:justify-between md:items-center mb-4">
+                <div class="flex items-center justify-between gap-3 w-full">
+                    <h2 class="text-lg font-bold text-gray-800">Daily Meal History</h2>
+                    <button onclick="printSection('daily-history')" class="bg-gray-800 text-white px-3 py-1.5 rounded-lg text-xs font-semibold hover:bg-gray-900 transition">🖨️ Print Meal History</button>
+                </div>
+                <div class="flex flex-col gap-2 sm:flex-row">
+                    <select id="history-member" class="user-select p-2 border rounded-lg text-sm text-gray-700 focus:outline-indigo-500">
+                        <option value="">Select member details</option>
+                    </select>
+                    <select id="available-date" class="p-2 border rounded-lg text-sm text-gray-700 focus:outline-indigo-500">
+                        <option value="">Available Meal Dates</option>
+                    </select>
+                    <input type="date" id="history-date" class="p-2 border rounded-lg text-sm text-gray-700 focus:outline-indigo-500">
+                </div>
+            </div>
+            <p id="history-summary" class="mb-3 text-sm text-gray-500"></p>
+            <div class="overflow-x-auto">
+                <table class="w-full text-left border-collapse">
+                    <thead>
+                        <tr class="border-b text-xs font-semibold text-gray-400 uppercase">
+                            <th class="py-3">Date</th>
+                            <th class="py-3">Member</th>
+                            <th class="py-3 text-center">Breakfast</th>
+                            <th class="py-3 text-center">Lunch</th>
+                            <th class="py-3 text-center">Dinner</th>
+                            <th class="py-3 text-right">Total</th>
+                            <th class="py-3 text-right">Status</th>
+                        </tr>
+                    </thead>
+                    <tbody id="meal-history-body" class="divide-y divide-gray-100 text-sm"></tbody>
+                </table>
+            </div>
+
+            <div id="member-details-section" class="mt-8 border-t border-gray-100 pt-6">
+                <div class="flex flex-col gap-2 sm:flex-row sm:justify-between sm:items-center mb-4">
+                    <div>
+                        <h3 id="member-history-title" class="text-base font-bold text-gray-800">Member Meal Details</h3>
+                        <p id="member-history-contact" class="text-xs text-gray-500"></p>
+                    </div>
+                    <button onclick="printSection('member-details')" class="bg-gray-800 text-white px-3 py-1.5 rounded-lg text-xs font-semibold hover:bg-gray-900 transition">Print Member Details</button>
+                </div>
+                <div class="grid grid-cols-2 md:grid-cols-4 gap-3 mb-5">
+                    <div class="rounded-lg bg-indigo-50 border border-indigo-100 p-3">
+                        <p class="text-xs text-indigo-500 uppercase font-semibold">Total Meals</p>
+                        <p id="member-total-meals" class="text-xl font-bold text-indigo-700">0</p>
+                    </div>
+                    <div class="rounded-lg bg-green-50 border border-green-100 p-3">
+                        <p class="text-xs text-green-600 uppercase font-semibold">Days Had Meal</p>
+                        <p id="member-days-had" class="text-xl font-bold text-green-700">0</p>
+                    </div>
+                    <div class="rounded-lg bg-amber-50 border border-amber-100 p-3">
+                        <p class="text-xs text-amber-600 uppercase font-semibold">Days Recorded</p>
+                        <p id="member-days-recorded" class="text-xl font-bold text-amber-700">0</p>
+                    </div>
+                    <div class="rounded-lg bg-red-50 border border-red-100 p-3">
+                        <p class="text-xs text-red-500 uppercase font-semibold">No Meal Days</p>
+                        <p id="member-days-missed" class="text-xl font-bold text-red-700">0</p>
+                    </div>
+                </div>
+                <div class="overflow-x-auto">
+                    <table class="w-full text-left border-collapse">
+                        <thead>
+                            <tr class="border-b text-xs font-semibold text-gray-400 uppercase">
+                                <th class="py-3">Date</th>
+                                <th class="py-3 text-center">Breakfast</th>
+                                <th class="py-3 text-center">Lunch</th>
+                                <th class="py-3 text-center">Dinner</th>
+                                <th class="py-3 text-center">Total</th>
+                                <th class="py-3 text-center">Meals Had</th>
+                                <th class="py-3 text-right">Status</th>
+                            </tr>
+                        </thead>
+                        <tbody id="member-meal-history-body" class="divide-y divide-gray-100 text-sm"></tbody>
+                    </table>
+                </div>
+                <p id="member-meal-breakdown" class="mt-4 text-xs text-gray-500"></p>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let MESS_ID = null;
+        const API_BASE = '';
+        let currentSession = null;
+        const today = (() => {
+            const date = new Date();
+            const offset = date.getTimezoneOffset() * 60000;
+            return new Date(date.getTime() - offset).toISOString().slice(0, 10);
+        })();
+        document.getElementById('meal-date').value = today;
+        document.getElementById('history-date').value = today;
+        document.getElementById('tx-date').value = today;
+
+        function showStatus(message, isError = false) {
+            const status = document.getElementById('app-status');
+            status.textContent = message;
+            status.className = isError
+                ? 'rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700'
+                : 'rounded-lg border border-green-200 bg-green-50 px-4 py-3 text-sm text-green-700';
+        }
+
+        async function apiRequest(path, options = {}) {
+            try {
+                const response = await fetch(`${API_BASE}${path}`, options);
+                const result = await response.json();
+                if (!response.ok || result.status !== 'success') {
+                    throw new Error(result.message || 'Request failed.');
+                }
+                return result;
+            } catch (err) {
+                showStatus(err.message || 'Request failed.', true);
+                throw err;
+            }
+        }
+
+        async function loadSession() {
+            const response = await fetch('/local_auth.php', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ action: 'session' })
+            });
+            const result = await response.json();
+            if (result.status !== 'success') {
+                window.location.href = 'local_login.html';
+                throw new Error('Login required.');
+            }
+            currentSession = result.data;
+            MESS_ID = currentSession.mess_id;
+            document.getElementById('mess-id-display').textContent = currentSession.mess_code || MESS_ID;
+            document.getElementById('session-user').textContent = `${currentSession.name} (${currentSession.role})`;
+            if (currentSession.is_impersonating) document.getElementById('return-admin').classList.remove('hidden');
+            if (currentSession.role !== 'manager') {
+                document.querySelector('.action-forms-section').classList.add('hidden');
+                document.getElementById('admin-password-panel').classList.add('hidden');
+                document.getElementById('my-password-panel').classList.add('hidden');
+            }
+        }
+
+        async function logout() {
+            await fetch('/local_auth.php', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ action: 'logout' }) });
+            window.location.href = 'local_login.html';
+        }
+
+        async function returnToAdmin() {
+            await fetch('/local_auth.php', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ action: 'exit_impersonation' }) });
+            window.location.reload();
+        }
+
+        async function loadDashboard() {
+            try {
+                const result = await apiRequest(`/dashboard.php?mess_id=${MESS_ID}`);
+                document.getElementById('total-meals').innerText = result.data.total_meals;
+                document.getElementById('total-expense').innerText = 'BDT ' + result.data.total_expense;
+                document.getElementById('total-deposit').innerText = 'BDT ' + result.data.total_deposit;
+                document.getElementById('meal-rate').innerText = 'BDT ' + result.data.meal_rate;
+            } catch (err) {
+                showStatus(err.message, true);
+                console.error("Error loading dashboard data:", err);
+            }
+        }
+
+        async function loadMembers() {
+            try {
+                const result = await apiRequest(`/users.php?mess_id=${MESS_ID}`);
+                const selects = document.querySelectorAll('.user-select');
+                selects.forEach(select => {
+                    const currentVal = select.value;
+                    select.innerHTML = result.data.length ? '' : '<option value="">No members yet</option>';
+                    result.data.forEach(user => {
+                        select.innerHTML += `<option value="${user.id}">${user.name} (${user.user_code})</option>`;
+                    });
+                    if (currentVal) select.value = currentVal;
+                });
+                const passwordSelect = document.getElementById('password-user-id');
+                passwordSelect.innerHTML = result.data.length ? '' : '<option value="">No members yet</option>';
+                result.data.forEach(user => {
+                    passwordSelect.innerHTML += `<option value="${user.id}">${user.name} - ${user.user_code} (${user.role})</option>`;
+                });
+                const switchSelect = document.getElementById('switch-user-id');
+                switchSelect.innerHTML = result.data.length ? '' : '<option value="">No members yet</option>';
+                result.data.forEach(user => {
+                    switchSelect.innerHTML += `<option value="${user.id}">${user.name} - ${user.user_code} (${user.role})</option>`;
+                });
+                loadMemberMealDetails();
+            } catch (err) {
+                showStatus(err.message, true);
+                console.error("Error loading members:", err);
+            }
+        }
+
+        async function loadMemberSummary() {
+            try {
+                const result = await apiRequest(`/member_summary.php?mess_id=${MESS_ID}`);
+                const tableBody = document.getElementById('summary-table-body');
+                tableBody.innerHTML = '';
+                result.data.forEach(user => {
+                    const isDue = user.balance < 0;
+                    tableBody.innerHTML += `
+                        <tr>
+                            <td class="py-3 font-semibold text-gray-800">${user.name}</td>
+                            <td class="py-3 text-center font-medium text-gray-700">${user.total_meals}</td>
+                            <td class="py-3 text-center text-gray-700">BDT ${user.total_deposit}</td>
+                            <td class="py-3 text-center text-gray-700">BDT ${user.total_cost}</td>
+                            <td class="py-3 text-right font-bold ${isDue ? 'text-red-500' : 'text-green-600'}">
+                                ${isDue ? 'Due: BDT ' + Math.abs(user.balance) : 'Refund: BDT ' + user.balance}
+                            </td>
+                        </tr>
+                    `;
+                });
+            } catch (err) {
+                console.error("Error loading member summary:", err);
+            }
+        }
+
+        async function loadTransactions() {
+            try {
+                const result = await apiRequest(`/get_transactions.php?mess_id=${MESS_ID}`);
+                const tableBody = document.getElementById('transactions-table-body');
+                tableBody.innerHTML = '';
+                if(result.data.length === 0) {
+                    tableBody.innerHTML = `<tr><td colspan="6" class="py-3 text-gray-400 text-center">No transactions recorded yet.</td></tr>`;
+                    return;
+                }
+                result.data.forEach(tx => {
+                        const isDeposit = tx.type === 'deposit';
+                        const isUtility = tx.type === 'utility';
+                        
+                        let badgeClass = 'bg-amber-100 text-amber-700';
+                        if (isDeposit) badgeClass = 'bg-green-100 text-green-700';
+                        if (isUtility) badgeClass = 'bg-amber-100 text-amber-800';
+
+                        tableBody.innerHTML += `
+                            <tr>
+                                <td class="py-3 font-semibold text-gray-800">${tx.user_name}</td>
+                                <td class="py-3 text-gray-600">${tx.transaction_date}</td>
+                                <td class="py-3"><span class="px-2 py-1 text-xs rounded font-medium ${badgeClass} uppercase">${tx.type}</span></td>
+                                <td class="py-3 text-gray-600">${tx.title || '-'}</td>
+                                <td class="py-3 text-right font-bold ${isDeposit ? 'text-green-600' : 'text-gray-800'}">BDT ${tx.amount}</td>
+                                <td class="py-3 text-right">${currentSession.role === 'manager' ? `<button onclick="deleteTransaction(${tx.id})" class="text-xs text-red-500 hover:text-red-700 font-semibold bg-red-50 px-2.5 py-1 rounded border border-red-200 hover:bg-red-100 transition">Delete</button>` : ''}</td>
+                            </tr>
+                        `;
+                });
+            } catch (err) {
+                console.error("Error loading transactions:", err);
+            }
+        }
+
+        async function loadMealHistory(dateOverride = '') {
+            try {
+                const date = dateOverride || document.getElementById('history-date').value;
+                const memberQuery = currentSession.role === 'manager' ? '' : `&user_id=${currentSession.id}`;
+                const result = await apiRequest(`/meal_history.php?mess_id=${MESS_ID}&meal_date=${date}${memberQuery}`);
+                const tableBody = document.getElementById('meal-history-body');
+                tableBody.innerHTML = '';
+                const dailyData = currentSession.role === 'manager'
+                    ? result.data
+                    : (date === 'all' ? result.data : result.data.filter(meal => meal.meal_date === date)).map(meal => ({ ...meal, name: result.member.name }));
+                dailyData.forEach(meal => {
+                    const total = Number(meal.breakfast) + Number(meal.lunch) + Number(meal.dinner);
+                    const away = total === 0;
+                    tableBody.innerHTML += `
+                        <tr>
+                            <td class="py-3 text-gray-600">${meal.meal_date || date}</td>
+                            <td class="py-3 font-semibold text-gray-800">${meal.name}</td>
+                            <td class="py-3 text-center">${meal.breakfast}</td>
+                            <td class="py-3 text-center">${meal.lunch}</td>
+                            <td class="py-3 text-center">${meal.dinner}</td>
+                            <td class="py-3 text-right font-bold">${total}</td>
+                            <td class="py-3 text-right ${away ? 'text-red-500' : 'text-green-600'}">${away ? 'Away / Absent' : 'Present'}</td>
+                        </tr>
+                    `;
+                });
+                if (!dailyData.length) {
+                    tableBody.innerHTML = '<tr><td colspan="7" class="py-3 text-center text-gray-400">No meal entries for this date.</td></tr>';
+                }
+                document.getElementById('history-summary').textContent = currentSession.role === 'manager'
+                    ? `${date} meal history for ${dailyData.length} member(s).`
+                    : `${date} meal history for ${result.member.name}.`;
+            } catch (err) {
+                console.error("Error loading meal history:", err);
+            }
+        }
+
+        async function loadMemberMealDetails() {
+            const memberId = document.getElementById('history-member').value;
+            const body = document.getElementById('member-meal-history-body');
+            if (!memberId) {
+                body.innerHTML = '<tr><td colspan="7" class="py-3 text-center text-gray-400">Select a member to view meal details.</td></tr>';
+                return;
+            }
+
+            try {
+                const result = await apiRequest(`/meal_history.php?mess_id=${MESS_ID}&user_id=${memberId}`);
+                const summary = result.summary;
+                document.getElementById('member-history-title').textContent = `${result.member.name} - Meal Details`;
+                document.getElementById('member-history-contact').textContent = result.member.phone ? `Phone: ${result.member.phone}` : 'Phone: Not provided';
+                document.getElementById('member-total-meals').textContent = summary.total_meals;
+                document.getElementById('member-days-had').textContent = summary.days_with_meals;
+                document.getElementById('member-days-recorded').textContent = summary.days_recorded;
+                document.getElementById('member-days-missed').textContent = summary.days_without_meals;
+
+                body.innerHTML = '';
+                result.data.forEach(meal => {
+                    const hadMeals = [
+                        meal.breakfast > 0 ? `Breakfast ${meal.breakfast}` : 'Breakfast not eaten',
+                        meal.lunch > 0 ? `Lunch ${meal.lunch}` : 'Lunch not eaten',
+                        meal.dinner > 0 ? `Dinner ${meal.dinner}` : 'Dinner not eaten'
+                    ];
+                    const noMeal = Number(meal.total) === 0;
+                    body.innerHTML += `
+                        <tr>
+                            <td class="py-3 font-semibold text-gray-800">${meal.meal_date}</td>
+                            <td class="py-3 text-center ${meal.breakfast > 0 ? 'text-green-700' : 'text-red-500'}">${meal.breakfast > 0 ? meal.breakfast : 'Did not eat'}</td>
+                            <td class="py-3 text-center ${meal.lunch > 0 ? 'text-green-700' : 'text-red-500'}">${meal.lunch > 0 ? meal.lunch : 'Did not eat'}</td>
+                            <td class="py-3 text-center ${meal.dinner > 0 ? 'text-green-700' : 'text-red-500'}">${meal.dinner > 0 ? meal.dinner : 'Did not eat'}</td>
+                            <td class="py-3 text-center font-bold">${meal.total}</td>
+                            <td class="py-3 text-center text-xs text-gray-600">${hadMeals.filter(item => !item.includes('not eaten')).join(', ') || '-'}</td>
+                            <td class="py-3 text-right font-semibold ${noMeal ? 'text-red-500' : 'text-green-600'}">${meal.status}</td>
+                        </tr>
+                    `;
+                });
+                if (!result.data.length) {
+                    body.innerHTML = '<tr><td colspan="7" class="py-3 text-center text-gray-400">No meal history recorded for this member.</td></tr>';
+                }
+                document.getElementById('member-meal-breakdown').textContent =
+                    `Breakfast: ${summary.breakfast_count} (${summary.breakfast_missed} missed) | ` +
+                    `Lunch: ${summary.lunch_count} (${summary.lunch_missed} missed) | ` +
+                    `Dinner: ${summary.dinner_count} (${summary.dinner_missed} missed)`;
+            } catch (err) {
+                console.error("Error loading member meal details:", err);
+            }
+        }
+
+        function printMemberMealHistory() {
+            if (document.getElementById('history-member').value) printSection('daily-history');
+        }
+
+        function printSection(section) {
+            document.body.classList.add(`print-${section}`);
+            window.print();
+            window.setTimeout(() => document.body.classList.remove(`print-${section}`), 300);
+        }
+
+        async function loadAvailableDates() {
+            try {
+                const result = await apiRequest(`/meal_dates.php?mess_id=${MESS_ID}`);
+                const dateSelect = document.getElementById('available-date');
+                dateSelect.innerHTML = '<option value="">Available Meal Dates</option><option value="all">All Dates</option>';
+                result.data.forEach(entry => {
+                    dateSelect.innerHTML += `<option value="${entry.meal_date}">${entry.meal_date} - ${entry.total_meals} meal(s)</option>`;
+                });
+            } catch (err) {
+                console.error("Error loading available meal dates:", err);
+            }
+        }
+
+        async function deleteTransaction(id) {
+            if(!confirm("Are you sure you want to delete this transaction?")) return;
+
+            try {
+                const result = await apiRequest('/delete_transaction.php', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ id: id })
+                });
+                if(result.status === 'success') {
+                    loadAllData();
+                }
+            } catch (err) {
+                console.error("Error deleting transaction:", err);
+            }
+        }
+
+        async function loadAllData() {
+            if (!currentSession) return;
+            loadDashboard();
+            loadMembers();
+            loadMemberSummary();
+            loadTransactions();
+            loadMealHistory();
+            loadAvailableDates();
+        }
+
+        document.getElementById('history-date').addEventListener('change', loadMealHistory);
+        document.getElementById('history-member').addEventListener('change', loadMemberMealDetails);
+        document.getElementById('available-date').addEventListener('change', (event) => {
+            if (event.target.value) {
+                if (event.target.value === 'all') {
+                    loadMealHistory('all');
+                } else {
+                    document.getElementById('history-date').value = event.target.value;
+                    loadMealHistory();
+                }
+            }
+        });
+
+        document.getElementById('change-password-form').addEventListener('submit', async (event) => {
+            event.preventDefault();
+            const newPassword = document.getElementById('new-password').value;
+            if (newPassword !== document.getElementById('confirm-password').value) {
+                showStatus('New password and confirmation do not match.', true);
+                return;
+            }
+            try {
+                const result = await apiRequest('/local_auth.php', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ action: 'change_password', current_password: document.getElementById('current-password').value, new_password: newPassword })
+                });
+                showStatus(result.message);
+                event.target.reset();
+            } catch (err) { console.error('Error changing password:', err); }
+        });
+
+        document.getElementById('admin-reset-password-form').addEventListener('submit', async (event) => {
+            event.preventDefault();
+            try {
+                const result = await apiRequest('/local_auth.php', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ action: 'admin_reset_password', user_id: parseInt(document.getElementById('password-user-id').value) })
+                });
+                const output = document.getElementById('temporary-password-result');
+                output.textContent = `${result.data.name}'s temporary password: ${result.data.temporary_password}`;
+                output.classList.remove('hidden');
+            } catch (err) { console.error('Error resetting password:', err); }
+        });
+
+        document.getElementById('switch-user-form').addEventListener('submit', async (event) => {
+            event.preventDefault();
+            try {
+                await apiRequest('/local_auth.php', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ action: 'switch_user', user_id: parseInt(document.getElementById('switch-user-id').value) })
+                });
+                window.location.reload();
+            } catch (err) { console.error('Error switching user:', err); }
+        });
+
+        document.getElementById('add-member-form').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const data = {
+                mess_id: MESS_ID,
+                name: document.getElementById('new-member-name').value,
+                phone: document.getElementById('new-member-phone').value
+            };
+
+            const result = await apiRequest('/add_member.php', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(data)
+            });
+
+            if(result.status === 'success') {
+                    alert(`Member added successfully!\nUser ID: ${result.data.user_code}`);
+                document.getElementById('new-member-name').value = '';
+                document.getElementById('new-member-phone').value = '';
+                loadAllData();
+            }
+        });
+
+        document.getElementById('meal-form').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const data = {
+                mess_id: MESS_ID,
+                user_id: parseInt(document.getElementById('meal-user-id').value),
+                meal_date: document.getElementById('meal-date').value,
+                breakfast: parseFloat(document.getElementById('breakfast').value),
+                lunch: parseFloat(document.getElementById('lunch').value),
+                dinner: parseFloat(document.getElementById('dinner').value)
+            };
+
+            const result = await apiRequest('/meals.php', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(data)
+            });
+
+            if(result.status === 'success') {
+                alert('Meal updated successfully!');
+                document.getElementById('history-date').value = data.meal_date;
+                loadAllData();
+            }
+        });
+
+        document.getElementById('transaction-form').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const data = {
+                mess_id: MESS_ID,
+                user_id: parseInt(document.getElementById('tx-user-id').value),
+                type: document.getElementById('tx-type').value,
+                amount: parseFloat(document.getElementById('tx-amount').value),
+                title: document.getElementById('tx-title').value,
+                transaction_date: document.getElementById('tx-date').value
+            };
+
+            const result = await apiRequest('/transactions.php', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(data)
+            });
+
+            if(result.status === 'success') {
+                alert('Transaction recorded successfully!');
+                document.getElementById('tx-amount').value = '';
+                document.getElementById('tx-title').value = '';
+                loadAllData();
+            }
+        });
+
+        loadSession().then(loadAllData).catch(() => {});
+    </script>
+</body>
+</html>
