@@ -24,7 +24,7 @@ The dashboard is served from `index.html`; opening it without a valid session re
 ## Optional services
 
 - Social sign-in: Google and GitHub are available from the sign-in page. Follow [oauth-setup.md](./oauth-setup.md) to configure provider apps and use `start-with-oauth.ps1`; then connect a provider from the signed-in dashboard. Facebook sign-in is currently excluded from the interface. Keep client credentials out of the repository.
-- SMS password recovery: follow [sms-setup.md](./sms-setup.md) and configure Twilio credentials in the same PowerShell session used to start PHP.
+- SMS password recovery is optional and may require a paid Twilio sender. For no-cost access after initial setup, link Google or GitHub once and use that provider to sign in; see [oauth-setup.md](./oauth-setup.md). If enabling SMS, follow [sms-setup.md](./sms-setup.md) and configure Twilio credentials in the same PowerShell session used to start PHP.
 
 ## Data handling
 
