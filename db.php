@@ -1,13 +1,21 @@
 <?php
 header("Content-Type: application/json; charset=UTF-8");
 require_once __DIR__ . '/session_bootstrap.php';
+require_once __DIR__ . '/app_config.php';
 start_app_session();
 
-$host = getenv('ORTHO_DB_HOST') ?: "127.0.0.1";
-$port = (int) (getenv('ORTHO_DB_PORT') ?: 3306);
-$user = getenv('ORTHO_DB_USER') ?: "root";
-$password = getenv('ORTHO_DB_PASSWORD') ?: "";
-$dbname = getenv('ORTHO_DB_NAME') ?: "ortho_mess_management";
+try {
+    $host = app_config_value('ORTHO_DB_HOST', "127.0.0.1");
+    $port = (int) app_config_value('ORTHO_DB_PORT', '3306');
+    $user = app_config_value('ORTHO_DB_USER', "root");
+    $password = app_config_value('ORTHO_DB_PASSWORD');
+    $dbname = app_config_value('ORTHO_DB_NAME', "ortho_mess_management");
+    $caFile = app_config_value('ORTHO_DB_CA_CERT');
+} catch (UnexpectedValueException $error) {
+    http_response_code(500);
+    echo json_encode(["status" => "error", "message" => "Server configuration is invalid."]);
+    exit();
+}
 $is_local = in_array($host, ["127.0.0.1", "localhost"], true);
 
 // Initialize mysqli
@@ -15,7 +23,6 @@ mysqli_report(MYSQLI_REPORT_OFF);
 $conn = mysqli_init();
 
 if (!$is_local) {
-    $caFile = getenv('ORTHO_DB_CA_CERT');
     if (!$caFile || !is_file($caFile) || !is_readable($caFile)) {
         http_response_code(500);
         echo json_encode(["status" => "error", "message" => "Remote database TLS requires ORTHO_DB_CA_CERT to point to a readable trusted CA certificate."]);
@@ -50,6 +57,18 @@ function is_valid_iso_date($value): bool {
     }
     $date = DateTime::createFromFormat('!Y-m-d', $value);
     return $date !== false && $date->format('Y-m-d') === $value;
+}
+
+function normalize_phone(?string $value): string {
+    if (!is_string($value)) {
+        return '';
+    }
+
+    $value = trim($value);
+    $value = preg_replace('/[\s\-().+]/', '', $value);
+    $value = preg_replace('/\D+/', '', $value);
+
+    return $value;
 }
 
 function schema_failure(): void {

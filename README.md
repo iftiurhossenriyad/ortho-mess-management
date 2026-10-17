@@ -32,4 +32,27 @@ The application database starts empty. Only messes and accounts created through 
 
 ## Deployment
 
-The PHP built-in server and the included XAMPP launcher are for local development only. For public hosting, use a production PHP web server with HTTPS, set database and provider credentials in the hosting environment, and restrict database access to the application host. For remote MySQL, also set `ORTHO_DB_CA_CERT` to the path of a readable trusted CA certificate file; remote connections fail closed if it is missing, unreadable, or certificate verification cannot be enabled. Localhost/XAMPP connections do not require this variable. Never commit `.env` files, credentials, private keys, database exports, or user data.
+The PHP built-in server and the included XAMPP launcher are for local development only. For public hosting, use a production PHP web server with HTTPS and restrict database access to the application host. The app reads configuration from environment variables first. On hosts that do not expose environment-variable settings, place `ortho-config.php` one directory above the web document root; it must return a PHP array with string values:
+
+```php
+<?php
+return [
+    'ORTHO_DB_HOST' => 'your-mysql-host',
+    'ORTHO_DB_PORT' => '3306',
+    'ORTHO_DB_USER' => 'your-database-user',
+    'ORTHO_DB_PASSWORD' => 'your-database-password',
+    'ORTHO_DB_NAME' => 'your-database-name',
+    'ORTHO_DB_CA_CERT' => '/path/to/trusted-ca.pem',
+    'OAUTH_GOOGLE_CLIENT_ID' => 'your-google-client-id',
+    'OAUTH_GOOGLE_CLIENT_SECRET' => 'your-google-client-secret',
+    'OAUTH_GITHUB_CLIENT_ID' => 'your-github-client-id',
+    'OAUTH_GITHUB_CLIENT_SECRET' => 'your-github-client-secret',
+    'OAUTH_BASE_URL' => 'https://your-domain'
+];
+```
+
+If the host only permits uploads inside the webroot, the app also supports `private-config/ortho-config.php` beneath the document root, but only when that folder is protected from HTTP access. Put `Require all denied` in `private-config/.htaccess` and verify a direct request to a harmless test file in that folder is blocked before storing credentials. Do not use this fallback if the host does not enforce the access rule. Never place the configuration in an unprotected public directory.
+
+To fill the local private config without entering secrets in chat or committing them, run `powershell.exe -NoProfile -ExecutionPolicy Bypass -File .\configure-ortho-production.ps1` from the project folder. The script masks the database password and GitHub client secret, updates only those values and the GitHub client ID in the parent `ortho-config.php`, and does not upload the file.
+
+For remote MySQL, `ORTHO_DB_CA_CERT` must point to a readable trusted CA certificate; connections fail closed if it is missing, unreadable, or certificate verification cannot be enabled. Verify the host's CA bundle path and that it supports verified MySQL TLS before deployment. Localhost/XAMPP connections do not require this variable. Never commit `.env` files, credentials, private keys, database exports, or user data.

@@ -20,7 +20,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         exit();
     }
     $name = trim($name_input);
-    $phone = preg_replace('/[\s-]+/', '', trim($phone_input));
+    $phone = normalize_phone($phone_input);
     $password = $password_input;
 
     if ($name === '' || strlen($name) > 100 || $phone === '' || strlen($phone) > 30
@@ -127,7 +127,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $mess = $result->fetch_assoc();
             $mess_id = $mess['id'];
 
-            $existing_user = $conn->prepare("SELECT id FROM users WHERE mess_id = ? AND REPLACE(REPLACE(phone, ' ', ''), '-', '') = ? LIMIT 1");
+            $existing_user = $conn->prepare("SELECT id FROM users WHERE mess_id = ? AND REPLACE(REPLACE(REPLACE(REPLACE(REPLACE(REPLACE(phone, ' ', ''), '-', ''), '(', ''), ')', ''), '+', ''), '.', '') = ? LIMIT 1");
             $existing_user->bind_param("is", $mess_id, $phone);
             $existing_user->execute();
             if ($existing_user->get_result()->fetch_assoc()) {

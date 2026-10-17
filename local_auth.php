@@ -29,15 +29,14 @@ if ($action === 'login') {
         exit();
     }
     $mess_identifier = strtoupper(trim($mess_value));
-    $phone = trim($phone_value);
+    $phone = normalize_phone($phone_value);
     if (!$mess_identifier || !$phone || !$password) {
         echo json_encode(['status' => 'error', 'message' => 'Mess ID, phone number, and password are required.']);
         exit();
     }
-    $normalized_phone = preg_replace('/[\s-]+/', '', $phone);
-    $login_id = strtoupper(trim($phone));
-    $stmt = $conn->prepare("SELECT u.id, u.mess_id, m.mess_code, u.name, u.phone, u.role, u.password_hash FROM users u JOIN messes m ON m.id = u.mess_id WHERE (m.mess_code = ? OR CAST(m.id AS CHAR) = ?) AND (u.user_code = ? OR REPLACE(REPLACE(u.phone, ' ', ''), '-', '') = ?) LIMIT 1");
-    $stmt->bind_param('ssss', $mess_identifier, $mess_identifier, $login_id, $normalized_phone);
+    $login_id = strtoupper(trim((string) $phone_value));
+    $stmt = $conn->prepare("SELECT u.id, u.mess_id, m.mess_code, u.name, u.phone, u.role, u.password_hash FROM users u JOIN messes m ON m.id = u.mess_id WHERE (m.mess_code = ? OR CAST(m.id AS CHAR) = ?) AND (u.user_code = ? OR REPLACE(REPLACE(REPLACE(REPLACE(REPLACE(REPLACE(u.phone, ' ', ''), '-', ''), '(', ''), ')', ''), '+', ''), '.', '') = ?) LIMIT 1");
+    $stmt->bind_param('ssss', $mess_identifier, $mess_identifier, $login_id, $phone);
     $stmt->execute();
     $user = $stmt->get_result()->fetch_assoc();
     if (!$user || empty($user['password_hash']) || !password_verify($password, $user['password_hash'])) {

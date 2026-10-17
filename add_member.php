@@ -19,7 +19,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         exit();
     }
     $name = trim($name_input);
-    $phone = preg_replace('/[\s-]+/', '', trim($phone_input));
+    $phone = normalize_phone($phone_input);
 
     if (!$mess_id || $name === '' || $phone === '' || strlen($name) > 100 || strlen($phone) > 30) {
         http_response_code(400);
@@ -32,7 +32,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         exit();
     }
 
-    $existing_member = $conn->prepare("SELECT id FROM users WHERE mess_id = ? AND REPLACE(REPLACE(phone, ' ', ''), '-', '') = ? LIMIT 1");
+    $existing_member = $conn->prepare("SELECT id FROM users WHERE mess_id = ? AND REPLACE(REPLACE(REPLACE(REPLACE(REPLACE(REPLACE(phone, ' ', ''), '-', ''), '(', ''), ')', ''), '+', ''), '.', '') = ? LIMIT 1");
     $existing_member->bind_param("is", $mess_id, $phone);
     $existing_member->execute();
     if ($existing_member->get_result()->fetch_assoc()) {

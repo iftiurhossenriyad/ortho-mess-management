@@ -1,19 +1,33 @@
 <?php
 require_once __DIR__ . '/session_bootstrap.php';
+require_once __DIR__ . '/app_config.php';
 start_app_session();
 
 $provider_value = $_GET['provider'] ?? '';
 $provider = is_string($provider_value) ? strtolower($provider_value) : '';
+$configuration_error = false;
+try {
+    $google_client_id = app_config_value('OAUTH_GOOGLE_CLIENT_ID');
+    $google_client_secret = app_config_value('OAUTH_GOOGLE_CLIENT_SECRET');
+    $github_client_id = app_config_value('OAUTH_GITHUB_CLIENT_ID');
+    $github_client_secret = app_config_value('OAUTH_GITHUB_CLIENT_SECRET');
+} catch (UnexpectedValueException $error) {
+    $configuration_error = true;
+}
+if ($configuration_error) {
+    http_response_code(500);
+    exit('Social sign-in configuration is invalid.');
+}
 $providers = [
     'google' => [
-        'client_id' => getenv('OAUTH_GOOGLE_CLIENT_ID') ?: '',
-        'client_secret' => getenv('OAUTH_GOOGLE_CLIENT_SECRET') ?: '',
+        'client_id' => $google_client_id,
+        'client_secret' => $google_client_secret,
         'authorize' => 'https://accounts.google.com/o/oauth2/v2/auth',
         'token' => 'https://oauth2.googleapis.com/token'
     ],
     'github' => [
-        'client_id' => getenv('OAUTH_GITHUB_CLIENT_ID') ?: '',
-        'client_secret' => getenv('OAUTH_GITHUB_CLIENT_SECRET') ?: '',
+        'client_id' => $github_client_id,
+        'client_secret' => $github_client_secret,
         'authorize' => 'https://github.com/login/oauth/authorize',
         'token' => 'https://github.com/login/oauth/access_token'
     ]
@@ -34,7 +48,13 @@ function fail_login(string $error): void {
 }
 
 function callback_url(string $provider): string {
-    $base = rtrim(getenv('OAUTH_BASE_URL') ?: 'http://localhost:8000', '/');
+    try {
+        $base = app_config_value('OAUTH_BASE_URL', 'http://localhost:8000');
+    } catch (UnexpectedValueException $error) {
+        http_response_code(500);
+        exit('Social sign-in configuration is invalid.');
+    }
+    $base = rtrim($base, '/');
     return $base . '/oauth.php?provider=' . rawurlencode($provider);
 }
 

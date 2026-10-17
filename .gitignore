@@ -10,6 +10,7 @@ credentials.json
 oauth-credentials.json
 google-client*.json
 oauth-client*.json
+ortho-config.php
 
 # Database exports and local data
 *.sql
