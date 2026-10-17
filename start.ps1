@@ -34,7 +34,7 @@ if (-not (Test-Path $mysql) -or -not (Test-Path $mysqlAdmin) -or -not (Test-Path
 
 if (-not (Test-Path (Join-Path $mysqlData 'mysql\global_priv.frm'))) {
     New-Item -ItemType Directory -Path $mysqlData -Force | Out-Null
-    & $mysqlInstall "--datadir=$mysqlData" "--port=$mysqlPort"
+    & $mysqlInstall "--datadir=$mysqlData" "--port=$mysqlPort" '--default-user'
     if ($LASTEXITCODE -ne 0) {
         throw "The isolated Ortho database could not be initialized in $mysqlData."
     }
