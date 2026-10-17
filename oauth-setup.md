@@ -41,6 +41,6 @@ Google currently starts in **Testing** mode: only Google accounts listed as test
 
 ## First-time Social Account Linking
 
-The main sign-in page uses Google and GitHub only. Local credentials are retained for first-time social-account linking and optional SMS password recovery; use the phone number registered to the account and its password at `http://localhost:8000/local_login.html` to link a provider from the dashboard. Once linked, social sign-in is the no-cost way to return without needing the local password or SMS. SMS recovery requires a configured Twilio sender and may incur charges; see [sms-setup.md](./sms-setup.md).
+The main sign-in page uses Google and GitHub only. Local credentials are retained only for first-time social-account linking; use the phone number registered to the account and its password at `http://localhost:8000/local_login.html` to link a provider from the dashboard. To recover access later, sign in with the same provider account already linked to your Ortho account. Local-password and SMS recovery are not supported.
 
 The application database starts empty, and users set their own password when they register. There is no shared or built-in default password.
