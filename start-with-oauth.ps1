@@ -60,8 +60,7 @@ function Read-OAuthSecret([string] $Prompt) {
 }
 
 $providers = @(
-    @{ Name = 'GitHub'; Prefix = 'OAUTH_GITHUB'; AppIdPrompt = 'GitHub OAuth Client ID (leave empty to skip)' },
-    @{ Name = 'Facebook'; Prefix = 'OAUTH_FACEBOOK'; AppIdPrompt = 'Facebook App ID (leave empty to skip)' }
+    @{ Name = 'GitHub'; Prefix = 'OAUTH_GITHUB'; AppIdPrompt = 'GitHub OAuth Client ID (leave empty to skip)' }
 )
 
 foreach ($provider in $providers) {
