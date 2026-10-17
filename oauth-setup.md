@@ -1,28 +1,26 @@
 # Social Sign-in Setup
 
-The login portal is available at:
+Ortho supports Google, GitHub, and Facebook sign-in. Each provider requires an OAuth application owned by you; its client secret cannot be generated or enabled without your provider account. Create one or more OAuth apps using the callback URLs below, then start Ortho with the interactive launcher. Client secrets are entered as hidden input and are only kept in the current PowerShell process (they are not written into project files or GitHub).
 
-`http://localhost:8000/login.html`
-
-The OAuth callback URL for local development is:
-
-`http://localhost:8000/oauth.php?provider=google`
-`http://localhost:8000/oauth.php?provider=github`
-`http://localhost:8000/oauth.php?provider=facebook`
-
-Register an OAuth app in each provider's developer console and add the matching callback URL. Then set these environment variables before starting PHP:
-
-For Google, open **Google Cloud Console -> APIs & Services -> Credentials -> Create Credentials -> OAuth client ID**, choose **Web application**, add `http://localhost:8000` as an authorized JavaScript origin, and add the callback URL above as an authorized redirect URI.
+Run this from PowerShell in the project folder:
 
 ```powershell
-$env:OAUTH_BASE_URL = 'http://localhost:8000'
-$env:OAUTH_GOOGLE_CLIENT_ID = 'your-google-client-id'
-$env:OAUTH_GOOGLE_CLIENT_SECRET = 'your-google-client-secret'
-$env:OAUTH_GITHUB_CLIENT_ID = 'your-github-client-id'
-$env:OAUTH_GITHUB_CLIENT_SECRET = 'your-github-client-secret'
-$env:OAUTH_FACEBOOK_CLIENT_ID = 'your-facebook-app-id'
-$env:OAUTH_FACEBOOK_CLIENT_SECRET = 'your-facebook-app-secret'
+powershell.exe -NoProfile -ExecutionPolicy Bypass -File .\start-with-oauth.ps1
 ```
+
+Enter the public app base URL (use `http://localhost:8000` for local testing), then the Client ID and hidden Client Secret for each provider you created. Leave a provider's Client ID empty to skip it. For a deployed site, use its HTTPS URL as the base and register the matching HTTPS callback URLs below.
+
+For local development, register these exact redirect URIs:
+
+- Google: `http://localhost:8000/oauth.php?provider=google`
+- GitHub: `http://localhost:8000/oauth.php?provider=github`
+- Facebook: `http://localhost:8000/oauth.php?provider=facebook`
+
+Provider registration:
+
+- **Google:** In Google Cloud Console, configure the OAuth consent screen and create an OAuth Client ID with application type **Web application**. Add `http://localhost:8000` as an authorized JavaScript origin and the Google redirect URI above as an authorized redirect URI. During testing, add your Google account as a test user if the consent screen is in testing mode.
+- **GitHub:** In GitHub **Settings -> Developer settings -> OAuth Apps**, create an OAuth App and set its Authorization callback URL to the GitHub redirect URI above.
+- **Facebook:** In Meta for Developers, create an app with Facebook Login, enable Web OAuth login, and set the Valid OAuth Redirect URI to the Facebook redirect URI above. The app may need to be in Live mode and have the required permissions approved for other people to sign in.
 
 Required provider permissions:
 
@@ -30,7 +28,7 @@ Required provider permissions:
 - GitHub: read user profile and user email
 - Facebook: email and public profile
 
-After setting the variables, start the project from the same PowerShell session. First sign in with the account's Mess ID, User ID/phone, and password. From the dashboard, use **Connect a social sign-in** to link the provider to that account. Once linked, the provider can be used from the main sign-in page. A social profile by itself does not create a mess account or grant dashboard access.
+Create or join a mess with the regular registration form first. Then sign in with the account's Mess ID, User ID/phone, and password. From the dashboard, use **Connect a social sign-in** to link the provider to that account. Once linked, the provider can be used from the main sign-in page. For security, a social profile alone cannot create a manager or member account, join a mess, or grant dashboard access.
 
 ## Local Dashboard Login
 

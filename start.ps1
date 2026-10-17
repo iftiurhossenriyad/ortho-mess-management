@@ -7,10 +7,10 @@ $mysqlAdmin = 'D:\XAMPP\mysql\bin\mysqladmin.exe'
 $mysqlInstall = 'D:\XAMPP\mysql\bin\mysql_install_db.exe'
 $mysqlServer = 'D:\XAMPP\mysql\bin\mysqld.exe'
 $mysqlRoot = 'D:\XAMPP\mysql'
-$mysqlData = Join-Path $env:LOCALAPPDATA 'OrthoMessManagement\mysql-data'
-$mysqlConfig = Join-Path $mysqlData 'my.ini'
+$mysqlData = Join-Path $mysqlRoot 'data'
+$mysqlConfig = Join-Path $mysqlRoot 'bin\my.ini'
 $mysqlLog = Join-Path $mysqlData 'ortho-mariadb.log'
-$mysqlPort = 3307
+$mysqlPort = 3306
 $databaseName = 'ortho_mess_management'
 
 function Test-OrthoDatabaseReady {
@@ -42,7 +42,7 @@ if (-not (Test-Path (Join-Path $mysqlData 'mysql\global_priv.frm'))) {
 
 $mysqlReady = Test-OrthoDatabaseReady
 if (-not $mysqlReady) {
-    Start-Process -FilePath $mysqlServer -ArgumentList @("--defaults-file=$mysqlConfig", "--basedir=$mysqlRoot", '--bind-address=127.0.0.1', "--log-error=$mysqlLog") -WorkingDirectory (Join-Path $mysqlRoot 'bin') -WindowStyle Hidden
+    Start-Process -FilePath $mysqlServer -ArgumentList @("--defaults-file=$mysqlConfig", '--standalone', "--log-error=$mysqlLog") -WorkingDirectory (Join-Path $mysqlRoot 'bin') -WindowStyle Hidden
     for ($attempt = 0; $attempt -lt 30; $attempt++) {
         Start-Sleep -Seconds 1
         $mysqlReady = Test-OrthoDatabaseReady

@@ -16,14 +16,14 @@ A PHP and MySQL app for managing shared mess meals, expenses, deposits, member b
    powershell.exe -NoProfile -ExecutionPolicy Bypass -File .\start.ps1
    ```
 
-   The process-scoped execution-policy setting lets the downloaded PowerShell launcher run without changing Windows' system policy. The launcher expects XAMPP at `D:\XAMPP`. It starts a private MariaDB instance for this app on port `3307`, stores its database files under `%LOCALAPPDATA%\OrthoMessManagement\mysql-data`, and creates the empty schema from `database.sql` if needed. It does not use, overwrite, or delete XAMPP's existing MySQL data directory. If XAMPP is installed elsewhere, update the executable paths at the top of `start.ps1`.
+   The process-scoped execution-policy setting lets the downloaded PowerShell launcher run without changing Windows' system policy. The launcher expects XAMPP at `D:\XAMPP`. It starts XAMPP MariaDB on port `3306` and creates the empty app schema from `database.sql` if needed. If XAMPP is installed elsewhere, update the executable paths at the top of `start.ps1`.
 2. Visit `http://localhost:8000/login.html`, choose **Create a new account**, and create a mess manager account. Members can join using the invite code shown when the mess is created. Managers can also add members from the dashboard; each new member receives a temporary password that should be shared privately and changed after the first sign-in.
 
 The dashboard is served from `index.html`; opening it without a valid session redirects to local sign-in.
 
 ## Optional services
 
-- Social sign-in: follow [oauth-setup.md](./oauth-setup.md), set provider credentials as environment variables, then connect a provider from inside the signed-in dashboard. Do not put real credentials in source files.
+- Social sign-in: follow [oauth-setup.md](./oauth-setup.md) to create provider apps and use the interactive `start-with-oauth.ps1` launcher. Then connect a provider from inside the signed-in dashboard. Do not put real credentials in source files.
 - SMS password recovery: follow [sms-setup.md](./sms-setup.md) and configure Twilio credentials in the same PowerShell session used to start PHP.
 
 ## Data handling
