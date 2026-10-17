@@ -24,7 +24,7 @@ The dashboard is served from `index.html`; opening it without a valid session re
 ## Optional services
 
 - Social sign-in: Google and GitHub are available from the sign-in page. Follow [oauth-setup.md](./oauth-setup.md) to configure provider apps and use `start-with-oauth.ps1`; then connect a provider from the signed-in dashboard. Facebook sign-in is currently excluded from the interface. Keep client credentials out of the repository.
-- Account recovery: sign in with the same Google or GitHub account already linked to your Ortho account. See [oauth-setup.md](./oauth-setup.md). SMS recovery is not supported.
+- Account recovery: sign in with the same Google or GitHub account already linked to your Ortho account. See [oauth-setup.md](./oauth-setup.md).
 
 ## Data handling
 
