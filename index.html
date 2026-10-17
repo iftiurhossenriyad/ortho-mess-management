@@ -98,7 +98,7 @@
         }
         @media print {
             /* Hide action forms and buttons during print/PDF generation */
-            .action-forms-section, button, select, th:last-child, td:last-child {
+            .action-forms-section, button, select, .transactions-table th:last-child, .transactions-table td:last-child {
                 display: none !important;
             }
             body {
@@ -596,7 +596,7 @@
                 <button onclick="printSection('transactions')" class="bg-gray-800 text-white px-3 py-1.5 rounded-lg text-xs font-semibold hover:bg-gray-900 transition">🖨️ Print Transactions</button>
             </div>
             <div class="overflow-x-auto">
-                <table class="w-full text-left border-collapse">
+                <table class="transactions-table w-full text-left border-collapse">
                     <thead>
                         <tr class="border-b text-xs font-semibold text-gray-400 uppercase">
                             <th class="py-3">Member</th>
