@@ -45,7 +45,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             exit();
         }
 
-        $invite_code = strtoupper(bin2hex(random_bytes(3)));
+        $invite_code = strtoupper(bin2hex(random_bytes(12)));
 
         $conn->begin_transaction();
         $stmt = $conn->prepare("INSERT INTO messes (mess_name, invite_code) VALUES (?, ?)");

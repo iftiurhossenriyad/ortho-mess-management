@@ -128,7 +128,7 @@ if ($action === 'verify_reset_otp') {
         echo json_encode(['status' => 'error', 'message' => 'Enter the 6-digit OTP sent to your mobile.']);
         exit();
     }
-    if (time() > (int) ($_SESSION['reset_otp_expires'] ?? 0)) {
+    if (time() >= (int) ($_SESSION['reset_otp_expires'] ?? 0)) {
         echo json_encode(['status' => 'error', 'message' => 'OTP expired. Request a new OTP.']);
         exit();
     }
@@ -140,8 +140,18 @@ if ($action === 'verify_reset_otp') {
     $temporary_password = 'Ortho-' . strtoupper(bin2hex(random_bytes(8)));
     $temporary_hash = password_hash($temporary_password, PASSWORD_DEFAULT);
     $update = $conn->prepare('UPDATE users SET password_hash = ? WHERE id = ? AND mess_id = ?');
+    if (!$update) {
+        http_response_code(500);
+        echo json_encode(['status' => 'error', 'message' => 'Password recovery failed. Request a new OTP and try again.']);
+        exit();
+    }
     $update->bind_param('sii', $temporary_hash, $_SESSION['reset_user_id'], $_SESSION['reset_mess_id']);
-    $update->execute();
+    if (!$update->execute() || $update->affected_rows !== 1) {
+        unset($_SESSION['reset_otp_hash'], $_SESSION['reset_otp_expires'], $_SESSION['reset_otp_attempts'], $_SESSION['reset_user_id'], $_SESSION['reset_mess_id']);
+        http_response_code(500);
+        echo json_encode(['status' => 'error', 'message' => 'Password recovery failed. Request a new OTP and try again.']);
+        exit();
+    }
     unset($_SESSION['reset_otp_hash'], $_SESSION['reset_otp_expires'], $_SESSION['reset_otp_attempts'], $_SESSION['reset_user_id'], $_SESSION['reset_mess_id']);
     echo json_encode(['status' => 'success', 'message' => 'OTP verified. Use this temporary password to sign in, then change it.', 'data' => ['temporary_password' => $temporary_password]]);
     exit();

@@ -12,7 +12,8 @@
         .welcome { position: relative; display: flex; flex-direction: column; justify-content: space-between; overflow: hidden; padding: 38px; color: #fff; background: linear-gradient(145deg, #1b4332, #102d22); }
         .welcome::after { content: ''; position: absolute; right: -110px; bottom: -180px; width: 380px; height: 380px; border: 1px solid rgba(255,255,255,.15); border-radius: 50%; box-shadow: 0 0 0 34px rgba(255,255,255,.035), 0 0 0 68px rgba(255,255,255,.025); }
         .welcome > * { position: relative; z-index: 1; }
-        .logo { display: block; width: 110px; height: 72px; object-fit: contain; border-radius: 12px; background: #fff; }
+        .brand-wordmark { display: inline-flex; flex-direction: column; gap: 5px; color: #fff; font-size: 15px; font-weight: 800; letter-spacing: .18em; }
+        .brand-wordmark span { color: #b9d1c3; font-size: 8px; letter-spacing: .16em; }
         .welcome-copy { margin: 50px 0 auto; }
         .eyebrow { margin: 0 0 14px; color: #f3b391; font-size: 10px; font-weight: 700; letter-spacing: .16em; text-transform: uppercase; }
         .welcome h2 { margin: 0; font: 500 clamp(32px, 4vw, 48px)/1.05 Georgia, serif; letter-spacing: -.03em; }
@@ -38,14 +39,14 @@
         .success { border-color: #cee5d4; color: #165b3b; background: #f0f8f2; overflow-wrap: anywhere; }
         .back { display: block; margin-top: 19px; color: var(--forest); font-size: 12px; font-weight: 700; text-align: center; text-decoration: none; }
         .back:hover { text-decoration: underline; }
-        @media (max-width: 760px) { body { padding: 10px; } .register-page { max-width: 560px; min-height: auto; grid-template-columns: 1fr; border-radius: 22px; } .welcome { min-height: 215px; padding: 24px; } .welcome .logo { width: 86px; height: 56px; } .welcome-copy { margin: 28px 0 0; } .welcome h2 { max-width: 400px; font-size: 34px; } .welcome-copy p:last-child { margin-top: 9px; } .welcome-note { display: none; } .card { padding: 28px 24px 32px; } }
+        @media (max-width: 760px) { body { padding: 10px; } .register-page { max-width: 560px; min-height: auto; grid-template-columns: 1fr; border-radius: 22px; } .welcome { min-height: 215px; padding: 24px; } .welcome-copy { margin: 28px 0 0; } .welcome h2 { max-width: 400px; font-size: 34px; } .welcome-copy p:last-child { margin-top: 9px; } .welcome-note { display: none; } .card { padding: 28px 24px 32px; } }
         @media (max-width: 420px) { .mode button { padding: 5px; font-size: 12px; } h1 { font-size: 30px; } }
     </style>
 </head>
 <body>
     <main class="register-page">
         <aside class="welcome">
-            <img class="logo" src="Logo.jpeg" alt="Ortho logo">
+            <div class="brand-wordmark">ORTHO<span>MESS MANAGEMENT</span></div>
             <div class="welcome-copy">
                 <p class="eyebrow">A better way to share a home</p>
                 <h2>Good meals start with a good plan.</h2>
@@ -70,7 +71,7 @@
                 <label>Mess Name <input id="mess-name" type="text" placeholder="e.g. Ortho Flat 4B"></label>
             </div>
             <div id="join-fields" class="conditional">
-                <label>Mess Invite Code <input id="invite-code" type="text" placeholder="Enter invite code"></label>
+                <label>Mess Invite Code <input id="invite-code" type="text" maxlength="30" autocomplete="off" autocapitalize="characters" placeholder="Enter invite code"></label>
             </div>
             <button class="submit" type="submit">Create Manager Account</button>
         </form>

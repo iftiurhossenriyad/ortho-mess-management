@@ -152,6 +152,7 @@
         }
         html { scroll-behavior: smooth; scroll-padding-top: 24px; }
         body { padding: 18px !important; color: var(--desk-ink); background: var(--desk-paper) !important; }
+        .hidden { display: none !important; }
         #app-shell {
             display: grid;
             grid-template-columns: 228px minmax(0, 1fr);
@@ -1197,7 +1198,10 @@
             if (linked) showStatus(`${linked} sign-in was connected to your account.`);
             if (socialError) showStatus(socialErrors[socialError] || 'Social sign-in could not be connected.', true);
             return loadAllData();
-        }).catch(() => {});
+        }).catch((err) => {
+            if (err.message !== 'Login required.') showStatus(err.message || 'Dashboard could not be loaded.', true);
+            console.error('Error initializing dashboard:', err);
+        });
     </script>
 </body>
 </html>
