@@ -19,12 +19,13 @@ if (!is_string($action)) {
     exit();
 }
 
-function send_otp_sms(string $phone, string $otp): bool {
+function send_otp_sms(string $phone, string $otp): string {
     $sid = getenv('TWILIO_ACCOUNT_SID') ?: '';
     $token = getenv('TWILIO_AUTH_TOKEN') ?: '';
     $from = getenv('TWILIO_FROM_NUMBER') ?: '';
-    if (!$sid || !$token || !$from || !function_exists('curl_init')) return false;
+    if (!$sid || !$token || !$from || !function_exists('curl_init')) return 'not_configured';
     $curl = curl_init('https://api.twilio.com/2010-04-01/Accounts/' . rawurlencode($sid) . '/Messages.json');
+    if ($curl === false) return 'unavailable';
     curl_setopt_array($curl, [
         CURLOPT_RETURNTRANSFER => true,
         CURLOPT_POST => true,
@@ -39,7 +40,11 @@ function send_otp_sms(string $phone, string $otp): bool {
     $response = curl_exec($curl);
     $status = curl_getinfo($curl, CURLINFO_HTTP_CODE);
     curl_close($curl);
-    return $response !== false && $status >= 200 && $status < 300;
+    if ($response === false || $status < 200 || $status >= 300) {
+        error_log('Twilio SMS request failed with HTTP status ' . $status . '.');
+        return 'unavailable';
+    }
+    return 'sent';
 }
 
 if ($action === 'login') {
@@ -107,9 +112,13 @@ if ($action === 'request_reset_otp') {
     $_SESSION['reset_otp_attempts'] = 0;
     $_SESSION['reset_user_id'] = (int) $user['id'];
     $_SESSION['reset_mess_id'] = (int) $user['mess_id'];
-    if (!send_otp_sms($user['phone'], $otp)) {
-        unset($_SESSION['reset_otp_hash'], $_SESSION['reset_otp_expires'], $_SESSION['reset_user_id'], $_SESSION['reset_mess_id']);
-        echo json_encode(['status' => 'error', 'message' => 'SMS service is not configured. Add Twilio credentials to send OTP.']);
+    $sms_result = send_otp_sms($user['phone'], $otp);
+    if ($sms_result !== 'sent') {
+        unset($_SESSION['reset_otp_hash'], $_SESSION['reset_otp_expires'], $_SESSION['reset_otp_attempts'], $_SESSION['reset_user_id'], $_SESSION['reset_mess_id']);
+        $message = $sms_result === 'not_configured'
+            ? 'SMS service is not configured. Add Twilio credentials to send OTP.'
+            : 'SMS could not be sent. Check the Twilio configuration and try again.';
+        echo json_encode(['status' => 'error', 'message' => $message]);
         exit();
     }
     echo json_encode(['status' => 'success', 'message' => 'OTP sent to the registered mobile number.']);
