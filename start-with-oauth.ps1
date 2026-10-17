@@ -65,6 +65,27 @@ $providers = @(
 )
 
 foreach ($provider in $providers) {
+    $providerName = $provider.Name.ToLowerInvariant()
+    $providerCredentialFile = Join-Path $env:LOCALAPPDATA "OrthoMessManagement\credentials\oauth-client-$providerName.json"
+    if (Test-Path -LiteralPath $providerCredentialFile -PathType Leaf) {
+        try {
+            $providerCredentials = Get-Content -LiteralPath $providerCredentialFile -Raw | ConvertFrom-Json
+            $providerClient = $providerCredentials.web
+        } catch {
+            throw "$($provider.Name) OAuth client file is not valid JSON."
+        }
+
+        $providerCallback = "$($env:OAUTH_BASE_URL)/oauth.php?provider=$providerName"
+        if ([string]::IsNullOrWhiteSpace($providerClient.client_id) -or [string]::IsNullOrWhiteSpace($providerClient.client_secret) -or $providerClient.redirect_uris -notcontains $providerCallback) {
+            throw "$($provider.Name) OAuth client file must contain a web client with the matching Ortho callback URI."
+        }
+
+        [Environment]::SetEnvironmentVariable("$($provider.Prefix)_CLIENT_ID", $providerClient.client_id, 'Process')
+        [Environment]::SetEnvironmentVariable("$($provider.Prefix)_CLIENT_SECRET", $providerClient.client_secret, 'Process')
+        $configuredProviders++
+        continue
+    }
+
     $clientId = (Read-Host $provider.AppIdPrompt).Trim()
     if (-not $clientId) {
         continue
@@ -84,5 +105,5 @@ if ($configuredProviders -eq 0) {
     throw 'Configure at least one OAuth provider before starting the app.'
 }
 
-Write-Host "Starting Ortho with $configuredProviders social sign-in provider(s). Secrets are held only in this PowerShell process."
+Write-Host "Starting Ortho with $configuredProviders social sign-in provider(s). Provider secrets are not stored in project files."
 & (Join-Path $projectRoot 'start.ps1')

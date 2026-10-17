@@ -1,12 +1,17 @@
 # Social Sign-in Setup
 
-Ortho supports Google, GitHub, and Facebook sign-in. Each provider requires an OAuth application owned by you; its client secret cannot be generated or enabled without your provider account. Create one or more OAuth apps using the callback URLs below, then start Ortho with the interactive launcher. GitHub and Facebook secrets are entered as hidden input and kept only in the current PowerShell process. The Google JSON contains its secret, so keep that file private under your Windows user profile; never add it to the project or GitHub.
+Ortho supports Google, GitHub, and Facebook sign-in. Each provider requires an OAuth application owned by you; its client secret cannot be generated or enabled without your provider account. Create one or more OAuth apps using the callback URLs below, then start Ortho with the interactive launcher. Google, GitHub, and Facebook credentials are read from JSON files in your Windows user profile, outside the repository. Keep these files private and never add them to the project or GitHub. If a GitHub or Facebook JSON file is absent, the launcher can instead prompt for the client ID and enter the secret as hidden input for that session.
 
-For Google, save the downloaded Web client JSON outside the repository as:
+Save the Google Web client JSON outside the repository as:
 
 `%LOCALAPPDATA%\OrthoMessManagement\credentials\google-client.json`
 
-Create the `credentials` folder if it does not exist. Never add this JSON to GitHub or paste its client secret into chat.
+For GitHub or Facebook, save a JSON file with a `web` object containing `client_id`, `client_secret`, and a `redirect_uris` array at:
+
+- `%LOCALAPPDATA%\OrthoMessManagement\credentials\oauth-client-github.json`
+- `%LOCALAPPDATA%\OrthoMessManagement\credentials\oauth-client-facebook.json`
+
+The callback URI in each file must match the local callback URL listed below. Create the `credentials` folder if it does not exist. Never paste a client secret into chat.
 
 Run this from PowerShell in the project folder:
 
@@ -14,7 +19,7 @@ Run this from PowerShell in the project folder:
 powershell.exe -NoProfile -ExecutionPolicy Bypass -File .\start-with-oauth.ps1
 ```
 
-The launcher reads the Google client ID and secret from that JSON only in memory. Enter the public app base URL (use `http://localhost:8000` for local testing). It can also configure GitHub and Facebook: enter each provider's Client ID and its hidden Client Secret when prompted; leave the ID empty to skip that provider. For a deployed site, use its HTTPS URL as the base and register the matching HTTPS callback URLs below.
+The launcher reads configured client IDs and secrets only into the app process. Enter the public app base URL (use `http://localhost:8000` for local testing). It can also configure GitHub and Facebook interactively when their JSON files are absent: enter each provider's Client ID and its hidden Client Secret when prompted; leave the ID empty to skip that provider. For a deployed site, use its HTTPS URL as the base and register the matching HTTPS callback URLs below.
 
 For local development, register these exact redirect URIs:
 
