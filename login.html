@@ -93,6 +93,176 @@
         @media (max-width: 720px) { .page { grid-template-columns: 1fr; padding: 10px; gap: 10px; } .intro { min-height: 450px; padding: 18px 22px 16px; border-radius: 22px; } .brand-logo { width: 100px; height: 58px; } .story-carousel { margin-top: 14px; } .story-slide { min-height: 330px; } .eyebrow { margin-bottom: 13px; font-size: 9px; } h1 { font-size: 36px; } .slide-copy { margin-top: 14px; font-size: 12px; line-height: 1.45; } .slide-art { height: 150px; } .meal-art .table { bottom: 14px; height: 60px; } .meal-art .plate { bottom: 36px; width: 112px; height: 37px; } .meal-art .food { bottom: 56px; transform: scale(.85); } .meal-art .person { bottom: 38px; transform: scale(.8); transform-origin: bottom center; } .meal-art .person.three { bottom: 52px; } .overview-card { padding: 10px; } .overview-total { margin: 8px 0 3px; font-size: 22px; } .overview-bars { height: 36px; margin-top: 8px; } .receipt { padding: 8px 12px; } .receipt-title { margin-bottom: 6px; } .receipt-line { padding: 3px 0; } .receipt-total { padding-top: 6px; } .slide-controls { margin-top: 8px; } .slide-arrow { width: 32px; height: 32px; } .note { margin-top: 7px; font-size: 10px; } .panel { min-height: 500px; padding: 28px 20px; border-radius: 22px; } .login-logo { width: 72px; height: 72px; margin-bottom: 14px; } .card h2 { font-size: 34px; } .subtext { margin: 8px 0 18px; } .providers { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
         @media (max-width: 430px) { .provider { justify-content: center; } }
         @media (max-width: 380px) { .intro { min-height: 430px; padding: 14px 18px 12px; } .brand-logo { width: 90px; height: 52px; } .story-carousel { margin-top: 12px; } .story-slide { min-height: 320px; } h1 { font-size: 33px; } .slide-copy { font-size: 12px; } }
+        :root {
+            --ink: #181a1b;
+            --muted: #6e706d;
+            --line: #d8d9d1;
+            --forest: #273a35;
+            --forest-dark: #1d2e29;
+            --mint: #e8f7a0;
+            --coral: #ff9a72;
+            --paper: #f2f0e8;
+        }
+        body { min-width: 320px; color: var(--ink); background: var(--paper); font-family: Arial, Helvetica, sans-serif; }
+        .page {
+            width: min(100%, 1560px);
+            min-height: 100vh;
+            grid-template-columns: minmax(0, 1.12fr) minmax(380px, .88fr);
+            align-items: stretch;
+            gap: 14px;
+            margin: 0 auto;
+            padding: 14px;
+        }
+        .intro {
+            min-height: calc(100vh - 28px);
+            justify-content: space-between;
+            padding: 34px clamp(26px, 5.5vw, 86px) 28px;
+            border: 1px solid #292d2a;
+            border-radius: 8px 42px 8px 8px;
+            background: #171a19;
+        }
+        .intro::before {
+            right: -230px;
+            bottom: -300px;
+            border-color: rgba(232,247,160,.2);
+            box-shadow: 0 0 0 42px rgba(232,247,160,.035), 0 0 0 84px rgba(232,247,160,.025);
+        }
+        .intro::after {
+            right: 9%;
+            bottom: -275px;
+            border-color: rgba(255,154,114,.28);
+            opacity: .8;
+        }
+        .brand-logo { width: 112px; height: 62px; border-radius: 7px; }
+        .story-carousel { margin-top: 24px; }
+        .story-slide { min-height: 445px; }
+        .eyebrow { color: var(--mint); font-size: 10px; letter-spacing: .2em; }
+        h1 { max-width: 640px; color: #f2f0e8; font-family: Georgia, 'Times New Roman', serif; font-size: clamp(52px, 6.4vw, 92px); line-height: .94; letter-spacing: -.055em; }
+        .slide-copy { max-width: 410px; color: #c5cbc5; font-size: 14px; line-height: 1.7; }
+        .meal-art .table { background: #ee986f; box-shadow: 0 13px 0 #c16c53; }
+        .meal-art .person.one { background: #e2bd52; }
+        .meal-art .person.two { background: #7aa9a2; }
+        .meal-art .person.three { background: #d77964; }
+        .overview-card { border: 1px solid rgba(232,247,160,.5); border-radius: 8px; }
+        .overview-bars span { background: linear-gradient(#a4c56c, #365a50); }
+        .receipt { border-radius: 4px; }
+        .slide-controls { gap: 11px; margin-top: 12px; }
+        .slide-arrow { border-radius: 8px; color: var(--mint); background: rgba(255,255,255,.045); }
+        .slide-arrow:hover { background: rgba(232,247,160,.15); }
+        .slide-dot[aria-current="true"]::before { background: var(--coral); }
+        .slide-count, .note { color: #aab2ac; }
+        .panel {
+            position: relative;
+            min-height: calc(100vh - 28px);
+            align-content: center;
+            justify-items: stretch;
+            overflow: hidden;
+            padding: 76px clamp(24px, 5vw, 72px);
+            border: 0;
+            border-radius: 42px 8px 8px 8px;
+            background: #e5f19d;
+        }
+        .panel::before {
+            position: absolute;
+            top: 27px;
+            left: clamp(24px, 5vw, 72px);
+            color: #5b6542;
+            content: "MEMBER ACCESS     /     01";
+            font: 700 9px Arial, sans-serif;
+            letter-spacing: .16em;
+        }
+        .panel::after {
+            position: absolute;
+            right: -125px;
+            bottom: -180px;
+            width: 340px;
+            height: 340px;
+            border: 1px solid rgba(39,58,53,.12);
+            border-radius: 50%;
+            box-shadow: 0 0 0 28px rgba(39,58,53,.035), 0 0 0 56px rgba(39,58,53,.025);
+            content: "";
+            pointer-events: none;
+        }
+        .card { position: relative; z-index: 1; width: min(100%, 420px); margin: auto; padding: 0; }
+        .login-logo { display: none; }
+        .card h2 { font-family: Georgia, 'Times New Roman', serif; font-size: clamp(40px, 4.5vw, 58px); font-weight: 500; line-height: 1; letter-spacing: -.055em; text-align: left; }
+        .subtext { max-width: 300px; margin: 13px 0 28px; color: #55594b; font: 13px/1.65 Arial, sans-serif; text-align: left; }
+        .message { margin-bottom: 17px; }
+        .providers { grid-template-columns: 1fr; gap: 10px; }
+        .provider {
+            min-height: 58px;
+            justify-content: flex-start;
+            gap: 13px;
+            padding: 15px 17px;
+            border: 1px solid #1b201d;
+            border-radius: 6px;
+            color: #fff;
+            background: #1b201d;
+            font-size: 13px;
+            box-shadow: none;
+        }
+        .provider:hover { transform: translateY(-2px); border-color: #465345; color: #fff; background: #29332d; box-shadow: 0 8px 18px rgba(24,26,27,.12); }
+        .provider.github { border-color: #c3c9a5; color: var(--ink); background: rgba(255,255,255,.48); }
+        .provider.github:hover { border-color: #89946a; color: var(--ink); background: #f3f6dc; }
+        .provider-icon { flex-basis: 22px; width: 22px; height: 22px; }
+        .provider-icon svg { width: 20px; height: 20px; }
+        .divider { margin: 30px 0 14px; color: #707656; font-size: 9px; }
+        .divider::before, .divider::after { background: rgba(39,58,53,.22); }
+        .local-link { border-color: #b5c374; border-radius: 6px; color: #26372d; background: rgba(255,255,255,.42); }
+        .local-link:hover { border-color: #71834b; background: rgba(255,255,255,.72); }
+        .foot { margin-top: 22px; color: #707656; text-align: left; }
+        .link-setup a { color: #26372d; }
+        @media (max-width: 900px) {
+            .page { grid-template-columns: minmax(0, 1fr); }
+            .intro { min-height: 620px; }
+            .panel { min-height: 540px; padding: 76px clamp(26px, 9vw, 90px); }
+            .panel::before { left: clamp(26px, 9vw, 90px); }
+            .card { width: min(100%, 480px); }
+        }
+        @media (max-width: 720px) {
+            .page { gap: 10px; padding: 10px; }
+            .intro { min-height: 484px; padding: 18px 22px 16px; border-radius: 8px 30px 8px 8px; }
+            .brand-logo { width: 100px; height: 58px; }
+            .story-carousel { margin-top: 14px; }
+            .story-slide { min-height: 330px; }
+            h1 { font-size: 36px; }
+            .slide-copy { margin-top: 14px; font-size: 12px; line-height: 1.45; }
+            .slide-art { height: 150px; }
+            .meal-art .table { bottom: 14px; height: 60px; }
+            .meal-art .plate { bottom: 36px; width: 112px; height: 37px; }
+            .meal-art .food { bottom: 56px; transform: scale(.85); }
+            .meal-art .person { bottom: 38px; transform: scale(.8); transform-origin: bottom center; }
+            .meal-art .person.three { bottom: 52px; }
+            .overview-card { padding: 10px; }
+            .overview-total { margin: 8px 0 3px; font-size: 22px; }
+            .overview-bars { height: 36px; margin-top: 8px; }
+            .receipt { padding: 8px 12px; }
+            .receipt-title { margin-bottom: 6px; }
+            .receipt-line { padding: 3px 0; }
+            .receipt-total { padding-top: 6px; }
+            .slide-controls { margin-top: 8px; }
+            .slide-arrow { width: 32px; height: 32px; }
+            .note { margin-top: 7px; font-size: 10px; }
+            .panel { min-height: 520px; padding: 76px 28px 48px; border-radius: 30px 8px 8px 8px; }
+            .panel::before { top: 27px; left: 28px; }
+            .card h2 { font-size: 44px; }
+            .subtext { margin-bottom: 23px; }
+            .providers { grid-template-columns: 1fr; }
+        }
+        @media (max-width: 380px) {
+            .intro { min-height: 464px; padding: 14px 18px 12px; }
+            .brand-logo { width: 90px; height: 52px; }
+            .story-carousel { margin-top: 12px; }
+            .story-slide { min-height: 320px; }
+            h1 { font-size: 33px; }
+            .slide-copy { font-size: 12px; }
+            .panel { padding-right: 20px; padding-left: 20px; }
+            .panel::before { left: 20px; }
+        }
+        @media (prefers-reduced-motion: reduce) {
+            html:focus-within { scroll-behavior: auto; }
+            *, *::before, *::after { transition-duration: .01ms !important; animation-duration: .01ms !important; }
+        }
     </style>
 </head>
 <body>
