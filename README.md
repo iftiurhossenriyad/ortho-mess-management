@@ -10,32 +10,14 @@ A PHP and MySQL app for managing shared mess meals, expenses, deposits, member b
 
 ## Local setup (Windows / XAMPP)
 
-1. Start MySQL in XAMPP.
-2. Create the empty application database and tables by importing `database.sql` in phpMyAdmin. It creates a separate `ortho_mess_management` database and inserts no sample accounts, users, meals, or transactions. From PowerShell, you can also run:
+1. Open PowerShell in the project folder and start the local app:
 
    ```powershell
-   & $env:ComSpec /c '"D:\XAMPP\mysql\bin\mysql.exe" -u root < "database.sql"'
+   powershell.exe -NoProfile -ExecutionPolicy Bypass -File .\start.ps1
    ```
 
-   If your MySQL root account has a password, add `-p` and enter it when prompted.
-3. Open PowerShell in the project folder. Configure the database environment variables if your local MySQL settings differ from the defaults:
-
-   ```powershell
-   $env:ORTHO_DB_HOST = '127.0.0.1'
-   $env:ORTHO_DB_PORT = '3306'
-   $env:ORTHO_DB_USER = 'root'
-   $env:ORTHO_DB_PASSWORD = ''
-   $env:ORTHO_DB_NAME = 'ortho_mess_management'
-   ```
-
-4. Start the local PHP server:
-
-   ```powershell
-   .\start.ps1
-   ```
-
-   The launcher expects XAMPP at `D:\XAMPP`. If yours is installed elsewhere, update the executable paths at the top of `start.ps1`.
-5. Visit `http://localhost:8000/login.html`, choose **Create a new account**, and create a mess manager account. Members can join using the invite code shown when the mess is created. Managers can also add members from the dashboard; each new member receives a temporary password that should be shared privately and changed after the first sign-in.
+   The process-scoped execution-policy setting lets the downloaded PowerShell launcher run without changing Windows' system policy. The launcher expects XAMPP at `D:\XAMPP`. It starts a private MariaDB instance for this app on port `3307`, stores its database files under `%LOCALAPPDATA%\OrthoMessManagement\mysql-data`, and creates the empty schema from `database.sql` if needed. It does not use, overwrite, or delete XAMPP's existing MySQL data directory. If XAMPP is installed elsewhere, update the executable paths at the top of `start.ps1`.
+2. Visit `http://localhost:8000/login.html`, choose **Create a new account**, and create a mess manager account. Members can join using the invite code shown when the mess is created. Managers can also add members from the dashboard; each new member receives a temporary password that should be shared privately and changed after the first sign-in.
 
 The dashboard is served from `index.html`; opening it without a valid session redirects to local sign-in.
 
