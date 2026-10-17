@@ -1,6 +1,6 @@
 # Social Sign-in Setup
 
-The sign-in page currently offers Google and GitHub. Each provider requires an OAuth application; credentials are loaded from outside the repository and must remain private. Facebook is intentionally excluded from the sign-in interface and startup configuration.
+The application supports Google and GitHub sign-in only. Facebook OAuth is not supported. Each provider requires an OAuth application; credentials are loaded from outside the repository and must remain private.
 
 Save the Google Web client JSON outside the repository as:
 

@@ -16,12 +16,6 @@ $providers = [
         'client_secret' => getenv('OAUTH_GITHUB_CLIENT_SECRET') ?: '',
         'authorize' => 'https://github.com/login/oauth/authorize',
         'token' => 'https://github.com/login/oauth/access_token'
-    ],
-    'facebook' => [
-        'client_id' => getenv('OAUTH_FACEBOOK_CLIENT_ID') ?: '',
-        'client_secret' => getenv('OAUTH_FACEBOOK_CLIENT_SECRET') ?: '',
-        'authorize' => 'https://www.facebook.com/v20.0/dialog/oauth',
-        'token' => 'https://graph.facebook.com/v20.0/oauth/access_token'
     ]
 ];
 
@@ -93,7 +87,7 @@ if (!isset($_GET['code'])) {
         'redirect_uri' => $redirect_uri,
         'response_type' => 'code',
         'state' => $_SESSION['oauth_state'],
-        'scope' => $provider === 'github' ? 'read:user user:email' : ($provider === 'facebook' ? 'email,public_profile' : 'openid email profile')
+        'scope' => $provider === 'github' ? 'read:user user:email' : 'openid email profile'
     ];
     header('Location: ' . $config['authorize'] . '?' . http_build_query($params));
     exit();
@@ -140,12 +134,6 @@ if ($provider === 'google') {
     $provider_id = (string) ($profile['id'] ?? '');
     $name = ($profile['name'] ?? '') ?: ($profile['login'] ?? 'Ortho Member');
     $avatar = $profile['avatar_url'] ?? '';
-} else {
-    $profile = request_json('https://graph.facebook.com/v20.0/me?fields=id,name,email,picture.type(large)&access_token=' . rawurlencode($access_token));
-    $provider_id = (string) ($profile['id'] ?? '');
-    $email = $profile['email'] ?? '';
-    $name = $profile['name'] ?? 'Ortho Member';
-    $avatar = $profile['picture']['data']['url'] ?? '';
 }
 
 if (!$provider_id) fail_login('oauth_failed');
