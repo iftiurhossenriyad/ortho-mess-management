@@ -103,7 +103,7 @@
             --coral: #ff9a72;
             --paper: #f2f0e8;
         }
-        body { min-width: 320px; color: var(--ink); background: var(--paper); font-family: Arial, Helvetica, sans-serif; }
+        body { color: var(--ink); background: var(--paper); font-family: Arial, Helvetica, sans-serif; }
         .page {
             width: min(100%, 1560px);
             min-height: 100vh;
@@ -134,6 +134,8 @@
             opacity: .8;
         }
         .brand-logo { width: 112px; height: 62px; border-radius: 7px; }
+        .brand-wordmark { display: inline-flex; flex-direction: column; gap: 5px; color: #f2f0e8; font: 800 19px/1 Arial, sans-serif; letter-spacing: .2em; }
+        .brand-wordmark span { color: #aab2ac; font-size: 8px; letter-spacing: .19em; }
         .story-carousel { margin-top: 24px; }
         .story-slide { min-height: 445px; }
         .eyebrow { color: var(--mint); font-size: 10px; letter-spacing: .2em; }
@@ -184,7 +186,6 @@
             pointer-events: none;
         }
         .card { position: relative; z-index: 1; width: min(100%, 420px); margin: auto; padding: 0; }
-        .login-logo { display: none; }
         .card h2 { font-family: Georgia, 'Times New Roman', serif; font-size: clamp(40px, 4.5vw, 58px); font-weight: 500; line-height: 1; letter-spacing: -.055em; text-align: left; }
         .subtext { max-width: 300px; margin: 13px 0 28px; color: #55594b; font: 13px/1.65 Arial, sans-serif; text-align: left; }
         .message { margin-bottom: 17px; }
@@ -268,7 +269,7 @@
 <body>
     <main class="page">
         <section class="intro" aria-label="Ortho mess management highlights">
-            <div class="brand"><img class="brand-logo" src="Logo.jpeg" alt="Ortho logo"></div>
+            <div class="brand"><div class="brand-wordmark">ORTHO<span>MESS MANAGEMENT</span></div></div>
             <div id="story-carousel" class="story-carousel" role="region" aria-roledescription="carousel" aria-label="Ortho features" tabindex="0">
                 <div id="story-track" class="story-track">
                     <article class="story-slide" role="group" aria-roledescription="slide" aria-label="1 of 3">
@@ -332,7 +333,6 @@
         </section>
         <section class="panel">
             <div class="card">
-                <img class="login-logo" src="Logo.jpeg" alt="Ortho logo">
                 <h2>Welcome back</h2>
                 <p class="subtext">Continue with the social account linked to your mess.</p>
                 <p id="message" class="message"></p>
