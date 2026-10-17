@@ -34,8 +34,8 @@
 <body>
     <main class="card">
         <img class="logo" src="Logo.jpeg" alt="Ortho logo">
-        <h1>Local dashboard sign in</h1>
-        <p class="sub">Use your Mess ID/code, User ID/phone, and password to continue.</p>
+        <h1>Connect your social sign-in</h1>
+        <p class="sub">Use your mess credentials once to connect Google, GitHub, or Facebook from your dashboard. After linking, sign in with that social provider.</p>
         <p id="message" class="message"></p>
         <form id="login-form">
             <label>Mess ID or Mess Code <input id="mess-id" type="text" placeholder="ORTHO-MESS-0001" autocomplete="organization" required></label>
@@ -53,6 +53,9 @@
         const passwordToggle = document.getElementById('password-toggle');
         const query = new URLSearchParams(window.location.search);
         const message = document.getElementById('message');
+        if (query.get('flow') === 'provider-link') {
+            message.textContent = 'Sign in once to connect a social provider. You can use social sign-in for future visits.';
+        }
         if (query.get('error') === 'social_not_linked') {
             message.textContent = 'That social account is not linked to a mess account yet. Sign in here, then connect it from your dashboard.';
         }

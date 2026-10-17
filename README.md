@@ -17,9 +17,9 @@ A PHP and MySQL app for managing shared mess meals, expenses, deposits, member b
    ```
 
    The process-scoped execution-policy setting lets the downloaded PowerShell launcher run without changing Windows' system policy. The launcher expects XAMPP at `D:\XAMPP`. It starts XAMPP MariaDB on port `3306` and creates the empty app schema from `database.sql` if needed. If XAMPP is installed elsewhere, update the executable paths at the top of `start.ps1`.
-2. Visit `http://localhost:8000/login.html`, choose **Create a new account**, and create a mess manager account. Members can join using the invite code shown when the mess is created. Managers can also add members from the dashboard; each new member receives a temporary password that should be shared privately and changed after the first sign-in.
+2. Visit `http://localhost:8000/login.html`, choose **Create or join a mess**, and create a mess manager account. Members can join using the invite code shown when the mess is created. Managers can also add members from the dashboard; each new member receives a temporary password that should be shared privately for initial social-account linking.
 
-The dashboard is served from `index.html`; opening it without a valid session redirects to local sign-in.
+The dashboard is served from `index.html`; opening it without a valid session redirects to the social sign-in page. Use local credentials only for initial account setup and linking a social provider; social sign-in is the normal way to return.
 
 ## Optional services
 

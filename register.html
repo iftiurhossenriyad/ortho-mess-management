@@ -53,7 +53,7 @@
             </div>
             <button class="submit" type="submit">Create Manager Account</button>
         </form>
-        <a class="back" href="local_login.html">Already have an account? Sign in</a>
+        <a class="back" href="local_login.html?flow=provider-link">Already have an account? Connect social sign-in</a>
     </main>
     <script>
         let mode = 'create_mess';
@@ -97,7 +97,7 @@
                     `User ID: ${result.data.user_code}`,
                     result.data.invite_code ? `Invite Code: ${result.data.invite_code}` : ''
                 ].filter(Boolean).join(' | ');
-                message.textContent = `Account ready. Save these details: ${accountDetails}. Use the sign-in link below to continue.`;
+                message.textContent = `Account ready. Save these details: ${accountDetails}. Sign in once with your mess credentials to connect a social provider; use social sign-in for future visits.`;
             } catch (error) { message.textContent = error.message; }
         });
     </script>

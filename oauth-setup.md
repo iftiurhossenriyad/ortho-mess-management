@@ -39,12 +39,12 @@ Required provider permissions:
 - GitHub: read user profile and user email
 - Facebook: email and public profile
 
-Create or join a mess with the regular registration form first. Then sign in with the account's Mess ID, User ID/phone, and password. From the dashboard, use **Connect a social sign-in** to link the provider to that account. Once linked, the provider can be used from the main sign-in page. For security, a social profile alone cannot create a manager or member account, join a mess, or grant dashboard access.
+Create or join a mess with the registration form first. For the initial setup only, use the account's Mess ID, User ID/phone, and password to open the dashboard, then use **Connect a social sign-in** to link a provider. After linking, use that social provider from the main sign-in page for future visits. For security, a social profile alone cannot create a manager or member account, join a mess, or grant dashboard access.
 
 Google currently starts in **Testing** mode: only Google accounts listed as test users can sign in. Add each intended tester in **Google Auth Platform -> Audience -> Add users**. Making Google sign-in available to the general public requires a public HTTPS site and any Google verification required for the consent screen and scopes; localhost testing does not publish the app.
 
-## Local Dashboard Login
+## First-time Social Account Linking
 
-Use `http://localhost:8000/local_login.html` for the local role-based login. Sign in with the phone number registered to the account and its password.
+The main sign-in page uses Google, GitHub, or Facebook only. Local credentials are retained for first-time social-account linking and account recovery; use the phone number registered to the account and its password at `http://localhost:8000/local_login.html`. Once a provider is linked from the dashboard, use social sign-in on later visits.
 
 The application database starts empty, and users set their own password when they register. There is no shared or built-in default password.
