@@ -291,12 +291,72 @@
         #app-shell tbody tr:hover { background: #f7f7f2; }
         #app-shell #social-account-panel a { border-color: #d6e2d8; border-radius: 8px; color: var(--desk-teal); }
         #app-shell #app-status { border-radius: 9px; }
+        body {
+            background:
+                radial-gradient(ellipse at 91% 8%, rgba(28,100,96,.055), transparent 28%),
+                var(--desk-paper) !important;
+        }
+        #dashboard-header {
+            position: relative;
+            isolation: isolate;
+            overflow: hidden;
+            background: linear-gradient(112deg, #17272c 0%, #23434a 68%, #31585b 100%) !important;
+        }
+        #dashboard-header::after {
+            position: absolute;
+            z-index: -1;
+            top: -92px;
+            right: 8%;
+            width: 260px;
+            height: 260px;
+            border: 1px solid rgba(216,239,173,.19);
+            border-radius: 50%;
+            box-shadow: 0 0 0 24px rgba(216,239,173,.035), 0 0 0 48px rgba(216,239,173,.025);
+            content: "";
+        }
+        #dashboard-header h1 { font-size: clamp(28px, 3.1vw, 39px); }
+        #dashboard-header > div:last-child { position: relative; z-index: 1; }
+        #dashboard-nav { border: 1px solid rgba(255,255,255,.08); background: linear-gradient(155deg, #24383d, #1c2b30); }
+        .nav-brand strong { font-size: 15px; letter-spacing: .16em; }
+        .nav-kicker { margin-top: 28px; }
+        .section-link { min-height: 46px; gap: 12px; border: 1px solid transparent; }
+        .section-link:hover { border-color: rgba(255,255,255,.07); background: rgba(255,255,255,.07); }
+        .section-link.is-active { border-color: rgba(216,239,173,.12); background: rgba(216,239,173,.1); }
+        .section-link.is-active::before { width: 3px; height: 20px; margin-left: -10px; border-radius: 0 4px 4px 0; background: #d8efad; content: ""; }
+        .nav-glyph { text-align: center; }
+        #overview-section > div {
+            min-height: 130px;
+            border-radius: 16px;
+            transition: transform .2s ease, box-shadow .2s ease;
+        }
+        #overview-section > div:hover { transform: translateY(-3px); box-shadow: 0 12px 25px rgba(24,35,41,.08) !important; }
+        #overview-section > div::before { width: 30px; height: 4px; margin-bottom: 18px; }
+        #overview-section > div p:last-of-type { font-variant-numeric: tabular-nums; }
+        #actions-section > div, #account-section > div {
+            border-radius: 15px;
+            transition: transform .2s ease, box-shadow .2s ease;
+        }
+        #actions-section > div:hover, #account-section > div:hover { transform: translateY(-2px); box-shadow: 0 12px 26px rgba(24,35,41,.075) !important; }
+        #summary-section, #transactions-section, #daily-history-section, #social-account-panel {
+            border-radius: 15px;
+        }
+        #summary-section > div:first-child, #transactions-section > div:first-child {
+            padding-bottom: 14px;
+            border-bottom: 1px solid #edede6;
+        }
+        #summary-section h2, #transactions-section h2, #daily-history-section h2 { font-size: 19px; }
+        #app-shell button:focus-visible, #app-shell a:focus-visible, #dashboard-nav a:focus-visible {
+            outline: 3px solid rgba(216,239,173,.85);
+            outline-offset: 3px;
+        }
+        #app-shell input:focus, #app-shell select:focus { box-shadow: 0 0 0 3px rgba(28,100,96,.08); }
         @media (max-width: 900px) {
             body { padding: 12px !important; }
             #app-shell { grid-template-columns: 190px minmax(0, 1fr); gap: 14px; }
             #dashboard-header { padding: 20px; }
             #dashboard-nav { top: 12px; height: calc(100vh - 24px); min-height: 520px; max-height: calc(100vh - 24px); }
             #overview-section > div { min-height: 108px; padding: 15px; }
+            #overview-section > div { min-height: 118px; }
         }
         @media (max-width: 680px) {
             body { padding: 10px !important; }
@@ -316,6 +376,7 @@
                 gap: 12px;
             }
             #dashboard-header { min-height: 0; align-items: flex-start; flex-direction: column; gap: 14px; padding: 18px; }
+            #dashboard-header h1 { font-size: 28px; }
             #dashboard-header > div:last-child { justify-content: flex-start; gap: 8px; }
             #dashboard-header > div:last-child button { padding: 8px 10px; font-size: 11px; }
             #dashboard-nav { position: sticky; z-index: 5; top: 0; height: auto; min-height: 0; max-height: none; padding: 10px; border-radius: 12px; }
@@ -325,7 +386,7 @@
             .section-link { min-height: 40px; flex: 0 0 auto; gap: 7px; padding: 0 10px; font-size: 11px; white-space: nowrap; }
             .nav-glyph { width: auto; }
             #overview-section { gap: 8px; }
-            #overview-section > div { min-height: 102px; padding: 13px; }
+            #overview-section > div { min-height: 108px; padding: 13px; border-radius: 12px; }
             #overview-section > div::before { margin-bottom: 11px; }
             #overview-section > div p:last-of-type { font-size: 17px; }
             #app-shell .action-forms-section > div, #account-section > div, #my-password-panel, #admin-password-panel,
