@@ -115,7 +115,7 @@ if ($meal_date === 'all') {
     exit();
 }
 
-if (!preg_match('/^\d{4}-\d{2}-\d{2}$/', $meal_date)) {
+if (!is_valid_iso_date($meal_date)) {
     echo json_encode(["status" => "error", "message" => "Valid Mess ID and date are required!"]);
     exit();
 }

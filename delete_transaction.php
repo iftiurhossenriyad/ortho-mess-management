@@ -11,8 +11,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         exit();
     }
 
-    $stmt = $conn->prepare("DELETE FROM transactions WHERE id = ?");
-    $stmt->bind_param("i", $tx_id);
+    $stmt = $conn->prepare("DELETE FROM transactions WHERE id = ? AND mess_id = ?");
+    $stmt->bind_param("ii", $tx_id, $session_user['mess_id']);
 
     if ($stmt->execute()) {
         echo json_encode(["status" => "success", "message" => "Transaction deleted successfully!"]);

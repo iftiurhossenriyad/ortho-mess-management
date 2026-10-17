@@ -23,7 +23,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     }
 
     if (!in_array($type, ['bazaar', 'utility', 'deposit'], true)
-        || !preg_match('/^\d{4}-\d{2}-\d{2}$/', $transaction_date)) {
+        || !is_valid_iso_date($transaction_date)) {
         echo json_encode(["status" => "error", "message" => "Invalid transaction type or date."]);
         exit();
     }

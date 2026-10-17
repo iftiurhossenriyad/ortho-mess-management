@@ -15,4 +15,4 @@ $env:TWILIO_AUTH_TOKEN = 'your-auth-token'
 $env:TWILIO_FROM_NUMBER = '+1your-twilio-number'
 ```
 
-The registered user phone number must be in international format, such as `+8801781981789`. Without these credentials, the app will not reset a password and will show that SMS service is not configured. This prevents recovery without verifying the user's mobile number.
+The registered user phone number must be in international format, such as `+[country code][phone number]`. Without these credentials, the app will not reset a password and will show that SMS service is not configured. This prevents recovery without verifying the user's mobile number.

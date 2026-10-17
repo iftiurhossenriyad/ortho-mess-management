@@ -1,7 +1,9 @@
 <?php
-session_start();
+require_once __DIR__ . '/session_bootstrap.php';
+start_app_session();
 
-$provider = strtolower($_GET['provider'] ?? '');
+$provider_value = $_GET['provider'] ?? '';
+$provider = is_string($provider_value) ? strtolower($provider_value) : '';
 $providers = [
     'google' => [
         'client_id' => getenv('OAUTH_GOOGLE_CLIENT_ID') ?: '',
@@ -24,9 +26,15 @@ $providers = [
 ];
 
 function fail_login(string $error): void {
-    $provider = strtolower($_GET['provider'] ?? '');
+    $provider_value = $_GET['provider'] ?? '';
+    $provider = is_string($provider_value) ? strtolower($provider_value) : '';
     $query = ['error' => $error];
     if ($provider) $query['provider'] = $provider;
+    if (!empty($_SESSION['oauth_link_user_id'])) {
+        unset($_SESSION['oauth_state'], $_SESSION['oauth_provider'], $_SESSION['oauth_link_user_id']);
+        header('Location: index.html?' . http_build_query(['social_error' => $error]));
+        exit();
+    }
     header('Location: login.html?' . http_build_query($query));
     exit();
 }
@@ -60,7 +68,23 @@ if (!isset($providers[$provider])) fail_login('oauth_failed');
 $config = $providers[$provider];
 $redirect_uri = callback_url($provider);
 
+if (isset($_GET['error'])) fail_login('oauth_failed');
+
 if (!isset($_GET['code'])) {
+    unset($_SESSION['oauth_link_user_id']);
+    if (($_GET['link'] ?? '') === '1') {
+        if (empty($_SESSION['local_user_id'])) {
+            header('Location: local_login.html');
+            exit();
+        }
+        require_once 'db.php';
+        $link_user = require_local_user();
+        if (!empty($_SESSION['is_impersonating'])) {
+            header('Location: index.html?social_error=oauth_failed');
+            exit();
+        }
+        $_SESSION['oauth_link_user_id'] = $link_user['id'];
+    }
     if (!$config['client_id'] || !$config['client_secret']) fail_login('provider_not_configured');
     $_SESSION['oauth_state'] = bin2hex(random_bytes(24));
     $_SESSION['oauth_provider'] = $provider;
@@ -75,16 +99,24 @@ if (!isset($_GET['code'])) {
     exit();
 }
 
-if (!hash_equals($_SESSION['oauth_state'] ?? '', $_GET['state'] ?? '') || ($_SESSION['oauth_provider'] ?? '') !== $provider) {
-    unset($_SESSION['oauth_state'], $_SESSION['oauth_provider']);
+$authorization_code = $_GET['code'];
+if (!is_string($authorization_code) || $authorization_code === '') {
+    fail_login('oauth_failed');
+}
+
+$callback_state = $_GET['state'] ?? '';
+if (!is_string($callback_state)
+    || !hash_equals($_SESSION['oauth_state'] ?? '', $callback_state)
+    || ($_SESSION['oauth_provider'] ?? '') !== $provider) {
     fail_login('invalid_state');
 }
+$link_user_id = isset($_SESSION['oauth_link_user_id']) ? (int) $_SESSION['oauth_link_user_id'] : null;
 unset($_SESSION['oauth_state'], $_SESSION['oauth_provider']);
 
 $token_post = [
     'client_id' => $config['client_id'],
     'client_secret' => $config['client_secret'],
-    'code' => $_GET['code'],
+    'code' => $authorization_code,
     'redirect_uri' => $redirect_uri,
     'grant_type' => 'authorization_code'
 ];
@@ -106,7 +138,7 @@ if ($provider === 'google') {
         if (!empty($entry['primary']) && !empty($entry['verified'])) { $email = $entry['email']; break; }
     }
     $provider_id = (string) ($profile['id'] ?? '');
-    $name = $profile['name'] ?: ($profile['login'] ?? 'Ortho Member');
+    $name = ($profile['name'] ?? '') ?: ($profile['login'] ?? 'Ortho Member');
     $avatar = $profile['avatar_url'] ?? '';
 } else {
     $profile = request_json('https://graph.facebook.com/v20.0/me?fields=id,name,email,picture.type(large)&access_token=' . rawurlencode($access_token));
@@ -118,7 +150,7 @@ if ($provider === 'google') {
 
 if (!$provider_id) fail_login('oauth_failed');
 require_once 'db.php';
-$conn->query("CREATE TABLE IF NOT EXISTS auth_accounts (
+$table_result = $conn->query("CREATE TABLE IF NOT EXISTS auth_accounts (
     id INT AUTO_INCREMENT PRIMARY KEY,
     provider VARCHAR(20) NOT NULL,
     provider_id VARCHAR(190) NOT NULL,
@@ -130,31 +162,56 @@ $conn->query("CREATE TABLE IF NOT EXISTS auth_accounts (
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
     UNIQUE KEY provider_account (provider, provider_id)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci");
+if (!$table_result) fail_login('oauth_failed');
 
 $stmt = $conn->prepare("SELECT id, user_id FROM auth_accounts WHERE provider = ? AND provider_id = ?");
+if (!$stmt) fail_login('oauth_failed');
 $stmt->bind_param('ss', $provider, $provider_id);
-$stmt->execute();
+if (!$stmt->execute()) fail_login('oauth_failed');
 $account = $stmt->get_result()->fetch_assoc();
 
-if ($account) {
-    $account_id = (int) $account['id'];
-    $user_id = $account['user_id'] ? (int) $account['user_id'] : null;
-    $update = $conn->prepare("UPDATE auth_accounts SET email = ?, name = ?, avatar = ? WHERE id = ?");
-    $update->bind_param('sssi', $email, $name, $avatar, $account_id);
-    $update->execute();
-} else {
-    $insert = $conn->prepare("INSERT INTO auth_accounts (provider, provider_id, email, name, avatar) VALUES (?, ?, ?, ?, ?)");
-    $insert->bind_param('sssss', $provider, $provider_id, $email, $name, $avatar);
-    $insert->execute();
-    $account_id = $insert->insert_id;
-    $user_id = null;
+if ($link_user_id !== null) {
+    $current_user = require_local_user();
+    if ($current_user['id'] !== $link_user_id || !empty($_SESSION['is_impersonating'])) {
+        fail_login('oauth_failed');
+    }
+    if ($account && $account['user_id'] && (int) $account['user_id'] !== $link_user_id) {
+        fail_login('social_account_linked');
+    }
+
+    if ($account) {
+        $update = $conn->prepare("UPDATE auth_accounts SET email = ?, name = ?, avatar = ?, user_id = ? WHERE id = ?");
+        if (!$update) fail_login('oauth_failed');
+        $account_id = (int) $account['id'];
+        $update->bind_param('sssii', $email, $name, $avatar, $link_user_id, $account_id);
+        if (!$update->execute()) fail_login('oauth_failed');
+    } else {
+        $insert = $conn->prepare("INSERT INTO auth_accounts (provider, provider_id, email, name, avatar, user_id) VALUES (?, ?, ?, ?, ?, ?)");
+        if (!$insert) fail_login('oauth_failed');
+        $insert->bind_param('sssssi', $provider, $provider_id, $email, $name, $avatar, $link_user_id);
+        if (!$insert->execute()) fail_login('oauth_failed');
+    }
+    unset($_SESSION['oauth_link_user_id']);
+    header('Location: index.html?linked=' . rawurlencode($provider));
+    exit();
 }
 
-$_SESSION['auth_account_id'] = $account_id;
-$_SESSION['auth_provider'] = $provider;
-$_SESSION['auth_name'] = $name;
-$_SESSION['auth_email'] = $email;
-$_SESSION['auth_user_id'] = $user_id;
+if (!$account || empty($account['user_id'])) fail_login('social_not_linked');
+$user_id = (int) $account['user_id'];
+$user_stmt = $conn->prepare("SELECT u.id, u.mess_id, u.name, u.role, m.mess_code FROM users u JOIN messes m ON m.id = u.mess_id WHERE u.id = ?");
+if (!$user_stmt) fail_login('oauth_failed');
+$user_stmt->bind_param('i', $user_id);
+if (!$user_stmt->execute()) fail_login('oauth_failed');
+$user = $user_stmt->get_result()->fetch_assoc();
+if (!$user) fail_login('social_not_linked');
+
+session_regenerate_id(true);
+unset($_SESSION['admin_user_id'], $_SESSION['admin_mess_id'], $_SESSION['admin_role'], $_SESSION['admin_name'], $_SESSION['admin_mess_code'], $_SESSION['is_impersonating']);
+$_SESSION['local_user_id'] = (int) $user['id'];
+$_SESSION['local_mess_id'] = (int) $user['mess_id'];
+$_SESSION['local_mess_code'] = $user['mess_code'];
+$_SESSION['local_role'] = $user['role'];
+$_SESSION['local_name'] = $user['name'];
 header('Location: index.html?login=success');
 exit();
 ?>

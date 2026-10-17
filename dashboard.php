@@ -47,8 +47,16 @@ if ($_SERVER['REQUEST_METHOD'] === 'GET') {
     $stmt4->execute();
     $total_deposit = $stmt4->get_result()->fetch_assoc()['total_deposit'] ?? 0;
 
-    // Meal Rate (Bazaar Expense / Total Meals)
-    $meal_rate = ($total_meals > 0) ? ($total_bazaar / $total_meals) : 0;
+    // Meal rate is shared by the whole mess, even in a member's personal view.
+    $rate_stmt = $conn->prepare("SELECT
+        (SELECT COALESCE(SUM(breakfast + lunch + dinner), 0) FROM meals WHERE mess_id = ?) AS mess_meals,
+        (SELECT COALESCE(SUM(amount), 0) FROM transactions WHERE mess_id = ? AND type = 'bazaar') AS mess_bazaar");
+    $rate_stmt->bind_param("ii", $mess_id, $mess_id);
+    $rate_stmt->execute();
+    $rate_totals = $rate_stmt->get_result()->fetch_assoc();
+    $meal_rate = ($rate_totals['mess_meals'] > 0)
+        ? ($rate_totals['mess_bazaar'] / $rate_totals['mess_meals'])
+        : 0;
 
     echo json_encode([
         "status" => "success",

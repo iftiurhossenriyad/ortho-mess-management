@@ -22,9 +22,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         exit();
     }
 
-    if (!is_numeric($breakfast) || !is_numeric($lunch) || !is_numeric($dinner)
+    if (!is_valid_iso_date($meal_date)
+        || !is_numeric($breakfast) || !is_numeric($lunch) || !is_numeric($dinner)
+        || !is_finite((float) $breakfast) || !is_finite((float) $lunch) || !is_finite((float) $dinner)
         || $breakfast < 0 || $lunch < 0 || $dinner < 0) {
-        echo json_encode(["status" => "error", "message" => "Use valid non-negative meal values."]);
+        echo json_encode(["status" => "error", "message" => "Use a valid meal date and non-negative meal values."]);
         exit();
     }
 
@@ -38,11 +40,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
     // Insert or Update daily meal using MySQL ON DUPLICATE KEY UPDATE
     $stmt = $conn->prepare("
-        INSERT INTO meals (mess_id, user_id, meal_date, breakfast, lunch, dinner) 
-        VALUES (?, ?, ?, ?, ?, ?) 
-        ON DUPLICATE KEY UPDATE 
-        breakfast = VALUES(breakfast), 
-        lunch = VALUES(lunch), 
+        INSERT INTO meals (mess_id, user_id, meal_date, breakfast, lunch, dinner)
+        VALUES (?, ?, ?, ?, ?, ?)
+        ON DUPLICATE KEY UPDATE
+        breakfast = VALUES(breakfast),
+        lunch = VALUES(lunch),
         dinner = VALUES(dinner)
     ");
 

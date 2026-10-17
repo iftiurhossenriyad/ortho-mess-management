@@ -41,10 +41,10 @@
         </div>
         <p id="message" class="message"></p>
         <form id="register-form">
-            <label>Full Name <input id="name" type="text" placeholder="Your full name" required></label>
-            <label>Phone Number <input id="phone" type="tel" placeholder="Your phone number" required></label>
-            <label>Password <input id="password" type="password" minlength="8" placeholder="At least 8 characters" required></label>
-            <label>Confirm Password <input id="confirm-password" type="password" minlength="8" placeholder="Repeat your password" required></label>
+            <label>Full Name <input id="name" type="text" maxlength="100" autocomplete="name" placeholder="Your full name" required></label>
+            <label>Phone Number <input id="phone" type="tel" maxlength="30" autocomplete="tel" placeholder="Your phone number" required></label>
+            <label>Password <input id="password" type="password" minlength="8" maxlength="255" autocomplete="new-password" placeholder="At least 8 characters" required></label>
+            <label>Confirm Password <input id="confirm-password" type="password" minlength="8" maxlength="255" autocomplete="new-password" placeholder="Repeat your password" required></label>
             <div id="create-fields" class="conditional active">
                 <label>Mess Name <input id="mess-name" type="text" placeholder="e.g. Ortho Flat 4B"></label>
             </div>
@@ -92,8 +92,12 @@
                 const result = await response.json();
                 if (result.status !== 'success') throw new Error(result.message || 'Account creation failed.');
                 message.className = 'message success';
-                message.textContent = `Account created. Mess Code: ${result.data.mess_code || result.data.mess_id}, User ID: ${result.data.user_code}. Redirecting to sign in...`;
-                setTimeout(() => { window.location.href = 'local_login.html'; }, 2200);
+                const accountDetails = [
+                    `Mess Code: ${result.data.mess_code || result.data.mess_id}`,
+                    `User ID: ${result.data.user_code}`,
+                    result.data.invite_code ? `Invite Code: ${result.data.invite_code}` : ''
+                ].filter(Boolean).join(' | ');
+                message.textContent = `Account ready. Save these details: ${accountDetails}. Use the sign-in link below to continue.`;
             } catch (error) { message.textContent = error.message; }
         });
     </script>

@@ -1,0 +1,27 @@
+# Local environment and credentials
+.env
+.env.*
+!.env.example
+*.pem
+*.key
+*.p12
+*.pfx
+credentials.json
+oauth-credentials.json
+
+# Database exports and local data
+*.sql
+*.sql.gz
+*.dump
+!database.sql
+*.sqlite
+*.sqlite3
+
+# Local logs, backups, and editor/OS files
+*.log
+*.bak
+*.tmp
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db

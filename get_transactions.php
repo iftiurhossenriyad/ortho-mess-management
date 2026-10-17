@@ -17,7 +17,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'GET') {
     $user_filter = $session_user['role'] === 'manager' ? '' : ' AND t.user_id = ?';
 
     $stmt = $conn->prepare("
-        SELECT t.id, t.type, t.amount, t.title, t.transaction_date, t.created_at, u.name as user_name 
+        SELECT t.id, t.type, t.amount, t.title, t.transaction_date, t.created_at, u.name as user_name
         FROM transactions t
         JOIN users u ON t.user_id = u.id
         WHERE t.mess_id = ?$user_filter

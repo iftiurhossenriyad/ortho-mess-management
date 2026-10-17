@@ -30,14 +30,10 @@ Required provider permissions:
 - GitHub: read user profile and user email
 - Facebook: email and public profile
 
-After setting the variables, start the project from the same PowerShell session. The callback creates the local `auth_accounts` table automatically and stores the provider account safely without storing a provider password.
+After setting the variables, start the project from the same PowerShell session. First sign in with the account's Mess ID, User ID/phone, and password. From the dashboard, use **Connect a social sign-in** to link the provider to that account. Once linked, the provider can be used from the main sign-in page. A social profile by itself does not create a mess account or grant dashboard access.
 
 ## Local Dashboard Login
 
-Use `http://localhost:8000/local_login.html` for the local role-based login. Existing users are initialized with:
+Use `http://localhost:8000/local_login.html` for the local role-based login. Sign in with the phone number registered to the account and its password.
 
-- Manager: `+8801781981789`
-- Members: their saved phone number
-- Initial password: `Ortho@123`
-
-Set `ORTHO_DEFAULT_PASSWORD` before starting PHP to use a different initial password. Change the default password before sharing the app beyond your local machine.
+The application database starts empty, and users set their own password when they register. There is no shared or built-in default password.

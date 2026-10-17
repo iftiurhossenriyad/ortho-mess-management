@@ -1,15 +1,23 @@
 <?php
-session_start();
 require_once 'db.php';
-header('Content-Type: application/json; charset=UTF-8');
 
 if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
     echo json_encode(['status' => 'error', 'message' => 'Use POST.']);
     exit();
 }
 
-$data = json_decode(file_get_contents('php://input'), true) ?: [];
+$data = json_decode(file_get_contents('php://input'), true);
+if (!is_array($data)) {
+    http_response_code(400);
+    echo json_encode(['status' => 'error', 'message' => 'Invalid JSON request body.']);
+    exit();
+}
 $action = $data['action'] ?? '';
+if (!is_string($action)) {
+    http_response_code(400);
+    echo json_encode(['status' => 'error', 'message' => 'Invalid authentication action.']);
+    exit();
+}
 
 function send_otp_sms(string $phone, string $otp): bool {
     $sid = getenv('TWILIO_ACCOUNT_SID') ?: '';
@@ -35,9 +43,16 @@ function send_otp_sms(string $phone, string $otp): bool {
 }
 
 if ($action === 'login') {
-    $mess_identifier = strtoupper(trim((string) ($data['mess_id'] ?? '')));
-    $phone = trim($data['phone'] ?? '');
+    $mess_value = $data['mess_id'] ?? '';
+    $phone_value = $data['phone'] ?? '';
     $password = $data['password'] ?? '';
+    if (!is_string($mess_value) || !is_string($phone_value) || !is_string($password)) {
+        http_response_code(400);
+        echo json_encode(['status' => 'error', 'message' => 'Enter valid sign-in details.']);
+        exit();
+    }
+    $mess_identifier = strtoupper(trim($mess_value));
+    $phone = trim($phone_value);
     if (!$mess_identifier || !$phone || !$password) {
         echo json_encode(['status' => 'error', 'message' => 'Mess ID, phone number, and password are required.']);
         exit();
@@ -48,7 +63,7 @@ if ($action === 'login') {
     $stmt->bind_param('ssss', $mess_identifier, $mess_identifier, $login_id, $normalized_phone);
     $stmt->execute();
     $user = $stmt->get_result()->fetch_assoc();
-    if (!$user || !password_verify($password, $user['password_hash'])) {
+    if (!$user || empty($user['password_hash']) || !password_verify($password, $user['password_hash'])) {
         echo json_encode(['status' => 'error', 'message' => 'Invalid Mess ID/code, User ID/phone, or password.']);
         exit();
     }
@@ -64,8 +79,15 @@ if ($action === 'login') {
 }
 
 if ($action === 'request_reset_otp') {
-    $mess_identifier = strtoupper(trim((string) ($data['mess_id'] ?? '')));
-    $identifier = strtoupper(trim((string) ($data['identifier'] ?? '')));
+    $mess_value = $data['mess_id'] ?? '';
+    $identifier_value = $data['identifier'] ?? '';
+    if (!is_string($mess_value) || !is_string($identifier_value)) {
+        http_response_code(400);
+        echo json_encode(['status' => 'error', 'message' => 'Enter valid account details.']);
+        exit();
+    }
+    $mess_identifier = strtoupper(trim($mess_value));
+    $identifier = strtoupper(trim($identifier_value));
     $normalized_identifier = preg_replace('/[\s-]+/', '', $identifier);
     if (!$mess_identifier || !$identifier) {
         echo json_encode(['status' => 'error', 'message' => 'Mess ID/code and User ID/phone are required.']);
@@ -75,7 +97,7 @@ if ($action === 'request_reset_otp') {
     $stmt->bind_param('ssss', $mess_identifier, $mess_identifier, $identifier, $normalized_identifier);
     $stmt->execute();
     $user = $stmt->get_result()->fetch_assoc();
-    if (!$user) {
+    if (!$user || empty($user['phone'])) {
         echo json_encode(['status' => 'error', 'message' => 'No account found for these details.']);
         exit();
     }
@@ -95,7 +117,13 @@ if ($action === 'request_reset_otp') {
 }
 
 if ($action === 'verify_reset_otp') {
-    $otp = trim((string) ($data['otp'] ?? ''));
+    $otp_value = $data['otp'] ?? '';
+    if (!is_string($otp_value)) {
+        http_response_code(400);
+        echo json_encode(['status' => 'error', 'message' => 'Enter a valid OTP.']);
+        exit();
+    }
+    $otp = trim($otp_value);
     if (!preg_match('/^\d{6}$/', $otp) || empty($_SESSION['reset_otp_hash'])) {
         echo json_encode(['status' => 'error', 'message' => 'Enter the 6-digit OTP sent to your mobile.']);
         exit();
@@ -109,7 +137,7 @@ if ($action === 'verify_reset_otp') {
         echo json_encode(['status' => 'error', 'message' => 'Invalid OTP. Check the code and try again.']);
         exit();
     }
-    $temporary_password = 'Ortho-' . strtoupper(bin2hex(random_bytes(4)));
+    $temporary_password = 'Ortho-' . strtoupper(bin2hex(random_bytes(8)));
     $temporary_hash = password_hash($temporary_password, PASSWORD_DEFAULT);
     $update = $conn->prepare('UPDATE users SET password_hash = ? WHERE id = ? AND mess_id = ?');
     $update->bind_param('sii', $temporary_hash, $_SESSION['reset_user_id'], $_SESSION['reset_mess_id']);
@@ -176,25 +204,36 @@ if ($action === 'exit_impersonation') {
 }
 
 if ($action === 'change_password') {
-    $current_password = $data['current_password'] ?? '';
-    $new_password = $data['new_password'] ?? '';
-    if (strlen($new_password) < 8) {
-        echo json_encode(['status' => 'error', 'message' => 'New password must be at least 8 characters.']);
+    if (!empty($_SESSION['is_impersonating'])) {
+        http_response_code(403);
+        echo json_encode(['status' => 'error', 'message' => 'Return to your own account before changing a password.']);
         exit();
     }
-    $auth_user = require_manager();
+    $current_password = $data['current_password'] ?? '';
+    $new_password = $data['new_password'] ?? '';
+    if (!is_string($current_password) || !is_string($new_password)
+        || strlen($new_password) < 8 || strlen($new_password) > 255) {
+        http_response_code(400);
+        echo json_encode(['status' => 'error', 'message' => 'New password must be between 8 and 255 characters.']);
+        exit();
+    }
+    $auth_user = require_local_user();
     $stmt = $conn->prepare('SELECT password_hash FROM users WHERE id = ? AND mess_id = ?');
     $stmt->bind_param('ii', $auth_user['id'], $auth_user['mess_id']);
     $stmt->execute();
     $user = $stmt->get_result()->fetch_assoc();
-    if (!$user || !password_verify($current_password, $user['password_hash'])) {
+    if (!$user || empty($user['password_hash']) || !password_verify($current_password, $user['password_hash'])) {
         echo json_encode(['status' => 'error', 'message' => 'Current password is incorrect.']);
         exit();
     }
     $new_hash = password_hash($new_password, PASSWORD_DEFAULT);
     $update = $conn->prepare('UPDATE users SET password_hash = ? WHERE id = ? AND mess_id = ?');
     $update->bind_param('sii', $new_hash, $auth_user['id'], $auth_user['mess_id']);
-    $update->execute();
+    if (!$update->execute()) {
+        http_response_code(500);
+        echo json_encode(['status' => 'error', 'message' => 'Password could not be changed. Please try again.']);
+        exit();
+    }
     echo json_encode(['status' => 'success', 'message' => 'Your password was changed successfully.']);
     exit();
 }
@@ -214,11 +253,15 @@ if ($action === 'admin_reset_password') {
         echo json_encode(['status' => 'error', 'message' => 'Selected user is not in this mess.']);
         exit();
     }
-    $temporary_password = 'Ortho-' . strtoupper(bin2hex(random_bytes(4)));
+    $temporary_password = 'Ortho-' . strtoupper(bin2hex(random_bytes(8)));
     $temporary_hash = password_hash($temporary_password, PASSWORD_DEFAULT);
     $update = $conn->prepare('UPDATE users SET password_hash = ? WHERE id = ? AND mess_id = ?');
     $update->bind_param('sii', $temporary_hash, $target_id, $auth_user['mess_id']);
-    $update->execute();
+    if (!$update->execute()) {
+        http_response_code(500);
+        echo json_encode(['status' => 'error', 'message' => 'Temporary password could not be generated. Please try again.']);
+        exit();
+    }
     echo json_encode(['status' => 'success', 'message' => 'Temporary password generated.', 'data' => ['name' => $target_user['name'], 'temporary_password' => $temporary_password]]);
     exit();
 }

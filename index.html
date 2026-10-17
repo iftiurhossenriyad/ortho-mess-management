@@ -155,7 +155,7 @@
                     </div>
                     <div>
                         <label class="block text-xs font-medium text-gray-600 mb-1">Description</label>
-                        <input type="text" id="tx-title" placeholder="e.g., Rice, Meat" class="w-full p-2 border rounded-lg text-gray-700 focus:outline-indigo-500">
+                        <input type="text" id="tx-title" maxlength="255" placeholder="e.g., Rice, Meat" class="w-full p-2 border rounded-lg text-gray-700 focus:outline-indigo-500">
                     </div>
                     <button type="submit" class="w-full bg-indigo-600 text-white py-2.5 rounded-lg font-semibold hover:bg-indigo-700 transition">Add Transaction</button>
                 </form>
@@ -167,13 +167,14 @@
                 <form id="add-member-form" class="space-y-3">
                     <div>
                         <label class="block text-xs font-medium text-gray-600 mb-1">Full Name</label>
-                        <input type="text" id="new-member-name" required placeholder="Member Name" class="w-full p-2 border rounded-lg text-gray-700 focus:outline-indigo-500">
+                        <input type="text" id="new-member-name" maxlength="100" required placeholder="Member Name" class="w-full p-2 border rounded-lg text-gray-700 focus:outline-indigo-500">
                     </div>
                     <div>
                         <label class="block text-xs font-medium text-gray-600 mb-1">Phone Number</label>
-                        <input type="text" id="new-member-phone" placeholder="01700000000" class="w-full p-2 border rounded-lg text-gray-700 focus:outline-indigo-500">
+                        <input type="tel" id="new-member-phone" maxlength="30" required placeholder="01700000000" class="w-full p-2 border rounded-lg text-gray-700 focus:outline-indigo-500">
                     </div>
                     <button type="submit" class="w-full bg-blue-600 text-white py-2.5 rounded-lg font-semibold hover:bg-blue-700 transition mt-2">Add Member</button>
+                    <p id="new-member-credentials" class="hidden rounded-lg border border-blue-100 bg-blue-50 p-3 text-sm text-blue-800"></p>
                 </form>
             </div>
         </div>
@@ -204,6 +205,16 @@
                 </form>
             </div>
         </div>
+
+        <section id="social-account-panel" class="bg-white p-6 rounded-xl shadow-sm border border-gray-200">
+            <h2 class="text-lg font-bold text-gray-800 mb-1">Connect a social sign-in</h2>
+            <p class="text-xs text-gray-500 mb-4">Link a provider to this mess account while signed in. You can then use it from the main sign-in page.</p>
+            <div class="flex flex-wrap gap-2">
+                <a href="oauth.php?provider=google&amp;link=1" class="rounded-lg border border-gray-200 px-4 py-2 text-sm font-semibold text-gray-700 hover:bg-gray-50">Link Google</a>
+                <a href="oauth.php?provider=github&amp;link=1" class="rounded-lg border border-gray-200 px-4 py-2 text-sm font-semibold text-gray-700 hover:bg-gray-50">Link GitHub</a>
+                <a href="oauth.php?provider=facebook&amp;link=1" class="rounded-lg border border-gray-200 px-4 py-2 text-sm font-semibold text-gray-700 hover:bg-gray-50">Link Facebook</a>
+            </div>
+        </section>
 
         <!-- Member Financial Summary Table -->
         <div id="summary-section" class="bg-white p-6 rounded-xl shadow-sm border border-gray-200">
@@ -355,6 +366,16 @@
                 : 'rounded-lg border border-green-200 bg-green-50 px-4 py-3 text-sm text-green-700';
         }
 
+        function escapeHtml(value) {
+            return String(value ?? '').replace(/[&<>"']/g, (character) => ({
+                '&': '&amp;',
+                '<': '&lt;',
+                '>': '&gt;',
+                '"': '&quot;',
+                "'": '&#39;'
+            })[character]);
+        }
+
         async function apiRequest(path, options = {}) {
             try {
                 const response = await fetch(`${API_BASE}${path}`, options);
@@ -388,7 +409,10 @@
             if (currentSession.role !== 'manager') {
                 document.querySelector('.action-forms-section').classList.add('hidden');
                 document.getElementById('admin-password-panel').classList.add('hidden');
+            }
+            if (currentSession.is_impersonating) {
                 document.getElementById('my-password-panel').classList.add('hidden');
+                document.getElementById('social-account-panel').classList.add('hidden');
             }
         }
 
@@ -423,19 +447,19 @@
                     const currentVal = select.value;
                     select.innerHTML = result.data.length ? '' : '<option value="">No members yet</option>';
                     result.data.forEach(user => {
-                        select.innerHTML += `<option value="${user.id}">${user.name} (${user.user_code})</option>`;
+                        select.innerHTML += `<option value="${Number(user.id)}">${escapeHtml(user.name)} (${escapeHtml(user.user_code)})</option>`;
                     });
                     if (currentVal) select.value = currentVal;
                 });
                 const passwordSelect = document.getElementById('password-user-id');
                 passwordSelect.innerHTML = result.data.length ? '' : '<option value="">No members yet</option>';
                 result.data.forEach(user => {
-                    passwordSelect.innerHTML += `<option value="${user.id}">${user.name} - ${user.user_code} (${user.role})</option>`;
+                    passwordSelect.innerHTML += `<option value="${Number(user.id)}">${escapeHtml(user.name)} - ${escapeHtml(user.user_code)} (${escapeHtml(user.role)})</option>`;
                 });
                 const switchSelect = document.getElementById('switch-user-id');
                 switchSelect.innerHTML = result.data.length ? '' : '<option value="">No members yet</option>';
                 result.data.forEach(user => {
-                    switchSelect.innerHTML += `<option value="${user.id}">${user.name} - ${user.user_code} (${user.role})</option>`;
+                    switchSelect.innerHTML += `<option value="${Number(user.id)}">${escapeHtml(user.name)} - ${escapeHtml(user.user_code)} (${escapeHtml(user.role)})</option>`;
                 });
                 loadMemberMealDetails();
             } catch (err) {
@@ -453,7 +477,7 @@
                     const isDue = user.balance < 0;
                     tableBody.innerHTML += `
                         <tr>
-                            <td class="py-3 font-semibold text-gray-800">${user.name}</td>
+                            <td class="py-3 font-semibold text-gray-800">${escapeHtml(user.name)}</td>
                             <td class="py-3 text-center font-medium text-gray-700">${user.total_meals}</td>
                             <td class="py-3 text-center text-gray-700">BDT ${user.total_deposit}</td>
                             <td class="py-3 text-center text-gray-700">BDT ${user.total_cost}</td>
@@ -480,19 +504,19 @@
                 result.data.forEach(tx => {
                         const isDeposit = tx.type === 'deposit';
                         const isUtility = tx.type === 'utility';
-                        
+
                         let badgeClass = 'bg-amber-100 text-amber-700';
                         if (isDeposit) badgeClass = 'bg-green-100 text-green-700';
                         if (isUtility) badgeClass = 'bg-amber-100 text-amber-800';
 
                         tableBody.innerHTML += `
                             <tr>
-                                <td class="py-3 font-semibold text-gray-800">${tx.user_name}</td>
-                                <td class="py-3 text-gray-600">${tx.transaction_date}</td>
-                                <td class="py-3"><span class="px-2 py-1 text-xs rounded font-medium ${badgeClass} uppercase">${tx.type}</span></td>
-                                <td class="py-3 text-gray-600">${tx.title || '-'}</td>
-                                <td class="py-3 text-right font-bold ${isDeposit ? 'text-green-600' : 'text-gray-800'}">BDT ${tx.amount}</td>
-                                <td class="py-3 text-right">${currentSession.role === 'manager' ? `<button onclick="deleteTransaction(${tx.id})" class="text-xs text-red-500 hover:text-red-700 font-semibold bg-red-50 px-2.5 py-1 rounded border border-red-200 hover:bg-red-100 transition">Delete</button>` : ''}</td>
+                                <td class="py-3 font-semibold text-gray-800">${escapeHtml(tx.user_name)}</td>
+                                <td class="py-3 text-gray-600">${escapeHtml(tx.transaction_date)}</td>
+                                <td class="py-3"><span class="px-2 py-1 text-xs rounded font-medium ${badgeClass} uppercase">${escapeHtml(tx.type)}</span></td>
+                                <td class="py-3 text-gray-600">${escapeHtml(tx.title || '-')}</td>
+                                <td class="py-3 text-right font-bold ${isDeposit ? 'text-green-600' : 'text-gray-800'}">BDT ${escapeHtml(tx.amount)}</td>
+                                <td class="py-3 text-right">${currentSession.role === 'manager' ? `<button onclick="deleteTransaction(${Number(tx.id)})" class="text-xs text-red-500 hover:text-red-700 font-semibold bg-red-50 px-2.5 py-1 rounded border border-red-200 hover:bg-red-100 transition">Delete</button>` : ''}</td>
                             </tr>
                         `;
                 });
@@ -516,11 +540,11 @@
                     const away = total === 0;
                     tableBody.innerHTML += `
                         <tr>
-                            <td class="py-3 text-gray-600">${meal.meal_date || date}</td>
-                            <td class="py-3 font-semibold text-gray-800">${meal.name}</td>
-                            <td class="py-3 text-center">${meal.breakfast}</td>
-                            <td class="py-3 text-center">${meal.lunch}</td>
-                            <td class="py-3 text-center">${meal.dinner}</td>
+                            <td class="py-3 text-gray-600">${escapeHtml(meal.meal_date || date)}</td>
+                            <td class="py-3 font-semibold text-gray-800">${escapeHtml(meal.name)}</td>
+                            <td class="py-3 text-center">${escapeHtml(meal.breakfast)}</td>
+                            <td class="py-3 text-center">${escapeHtml(meal.lunch)}</td>
+                            <td class="py-3 text-center">${escapeHtml(meal.dinner)}</td>
                             <td class="py-3 text-right font-bold">${total}</td>
                             <td class="py-3 text-right ${away ? 'text-red-500' : 'text-green-600'}">${away ? 'Away / Absent' : 'Present'}</td>
                         </tr>
@@ -565,10 +589,10 @@
                     const noMeal = Number(meal.total) === 0;
                     body.innerHTML += `
                         <tr>
-                            <td class="py-3 font-semibold text-gray-800">${meal.meal_date}</td>
-                            <td class="py-3 text-center ${meal.breakfast > 0 ? 'text-green-700' : 'text-red-500'}">${meal.breakfast > 0 ? meal.breakfast : 'Did not eat'}</td>
-                            <td class="py-3 text-center ${meal.lunch > 0 ? 'text-green-700' : 'text-red-500'}">${meal.lunch > 0 ? meal.lunch : 'Did not eat'}</td>
-                            <td class="py-3 text-center ${meal.dinner > 0 ? 'text-green-700' : 'text-red-500'}">${meal.dinner > 0 ? meal.dinner : 'Did not eat'}</td>
+                            <td class="py-3 font-semibold text-gray-800">${escapeHtml(meal.meal_date)}</td>
+                            <td class="py-3 text-center ${meal.breakfast > 0 ? 'text-green-700' : 'text-red-500'}">${meal.breakfast > 0 ? escapeHtml(meal.breakfast) : 'Did not eat'}</td>
+                            <td class="py-3 text-center ${meal.lunch > 0 ? 'text-green-700' : 'text-red-500'}">${meal.lunch > 0 ? escapeHtml(meal.lunch) : 'Did not eat'}</td>
+                            <td class="py-3 text-center ${meal.dinner > 0 ? 'text-green-700' : 'text-red-500'}">${meal.dinner > 0 ? escapeHtml(meal.dinner) : 'Did not eat'}</td>
                             <td class="py-3 text-center font-bold">${meal.total}</td>
                             <td class="py-3 text-center text-xs text-gray-600">${hadMeals.filter(item => !item.includes('not eaten')).join(', ') || '-'}</td>
                             <td class="py-3 text-right font-semibold ${noMeal ? 'text-red-500' : 'text-green-600'}">${meal.status}</td>
@@ -603,7 +627,7 @@
                 const dateSelect = document.getElementById('available-date');
                 dateSelect.innerHTML = '<option value="">Available Meal Dates</option><option value="all">All Dates</option>';
                 result.data.forEach(entry => {
-                    dateSelect.innerHTML += `<option value="${entry.meal_date}">${entry.meal_date} - ${entry.total_meals} meal(s)</option>`;
+                    dateSelect.innerHTML += `<option value="${escapeHtml(entry.meal_date)}">${escapeHtml(entry.meal_date)} - ${escapeHtml(entry.total_meals)} meal(s)</option>`;
                 });
             } catch (err) {
                 console.error("Error loading available meal dates:", err);
@@ -696,6 +720,8 @@
 
         document.getElementById('add-member-form').addEventListener('submit', async (e) => {
             e.preventDefault();
+            const credentials = document.getElementById('new-member-credentials');
+            credentials.classList.add('hidden');
             const data = {
                 mess_id: MESS_ID,
                 name: document.getElementById('new-member-name').value,
@@ -709,7 +735,8 @@
             });
 
             if(result.status === 'success') {
-                    alert(`Member added successfully!\nUser ID: ${result.data.user_code}`);
+                credentials.textContent = `${result.data.name} was added. User ID: ${result.data.user_code}. Temporary password: ${result.data.temporary_password}. Share it securely and ask them to change it after signing in.`;
+                credentials.classList.remove('hidden');
                 document.getElementById('new-member-name').value = '';
                 document.getElementById('new-member-phone').value = '';
                 loadAllData();
@@ -765,7 +792,20 @@
             }
         });
 
-        loadSession().then(loadAllData).catch(() => {});
+        loadSession().then(() => {
+            const params = new URLSearchParams(window.location.search);
+            const linked = params.get('linked');
+            const socialError = params.get('social_error');
+            const socialErrors = {
+                provider_not_configured: 'That provider is not configured on this server yet.',
+                social_account_linked: 'That social account is already linked to another mess account.',
+                oauth_failed: 'The social account could not be connected. Please try again.',
+                invalid_state: 'The social sign-in session expired. Please try again.'
+            };
+            if (linked) showStatus(`${linked} sign-in was connected to your account.`);
+            if (socialError) showStatus(socialErrors[socialError] || 'Social sign-in could not be connected.', true);
+            return loadAllData();
+        }).catch(() => {});
     </script>
 </body>
 </html>

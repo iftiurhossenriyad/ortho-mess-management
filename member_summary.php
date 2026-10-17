@@ -58,14 +58,14 @@ if ($_SERVER['REQUEST_METHOD'] === 'GET') {
         $user_id = $user['id'];
 
         // User Meals
-        $stmt_m = $conn->prepare("SELECT SUM(breakfast + lunch + dinner) as user_meals FROM meals WHERE user_id = ?");
-        $stmt_m->bind_param("i", $user_id);
+        $stmt_m = $conn->prepare("SELECT SUM(breakfast + lunch + dinner) as user_meals FROM meals WHERE user_id = ? AND mess_id = ?");
+        $stmt_m->bind_param("ii", $user_id, $mess_id);
         $stmt_m->execute();
         $user_meals = $stmt_m->get_result()->fetch_assoc()['user_meals'] ?? 0;
 
         // User Deposit
-        $stmt_d = $conn->prepare("SELECT SUM(amount) as user_deposit FROM transactions WHERE user_id = ? AND type = 'deposit'");
-        $stmt_d->bind_param("i", $user_id);
+        $stmt_d = $conn->prepare("SELECT SUM(amount) as user_deposit FROM transactions WHERE user_id = ? AND mess_id = ? AND type = 'deposit'");
+        $stmt_d->bind_param("ii", $user_id, $mess_id);
         $stmt_d->execute();
         $user_deposit = $stmt_d->get_result()->fetch_assoc()['user_deposit'] ?? 0;
 
