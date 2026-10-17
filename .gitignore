@@ -8,6 +8,8 @@
 *.pfx
 credentials.json
 oauth-credentials.json
+google-client*.json
+oauth-client*.json
 
 # Database exports and local data
 *.sql

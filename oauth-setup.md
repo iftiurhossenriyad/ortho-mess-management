@@ -1,6 +1,12 @@
 # Social Sign-in Setup
 
-Ortho supports Google, GitHub, and Facebook sign-in. Each provider requires an OAuth application owned by you; its client secret cannot be generated or enabled without your provider account. Create one or more OAuth apps using the callback URLs below, then start Ortho with the interactive launcher. Client secrets are entered as hidden input and are only kept in the current PowerShell process (they are not written into project files or GitHub).
+Ortho supports Google, GitHub, and Facebook sign-in. Each provider requires an OAuth application owned by you; its client secret cannot be generated or enabled without your provider account. Create one or more OAuth apps using the callback URLs below, then start Ortho with the interactive launcher. GitHub and Facebook secrets are entered as hidden input and kept only in the current PowerShell process. The Google JSON contains its secret, so keep that file private under your Windows user profile; never add it to the project or GitHub.
+
+For Google, save the downloaded Web client JSON outside the repository as:
+
+`%LOCALAPPDATA%\OrthoMessManagement\credentials\google-client.json`
+
+Create the `credentials` folder if it does not exist. Never add this JSON to GitHub or paste its client secret into chat.
 
 Run this from PowerShell in the project folder:
 
@@ -8,7 +14,7 @@ Run this from PowerShell in the project folder:
 powershell.exe -NoProfile -ExecutionPolicy Bypass -File .\start-with-oauth.ps1
 ```
 
-Enter the public app base URL (use `http://localhost:8000` for local testing), then the Client ID and hidden Client Secret for each provider you created. Leave a provider's Client ID empty to skip it. For a deployed site, use its HTTPS URL as the base and register the matching HTTPS callback URLs below.
+The launcher reads the Google client ID and secret from that JSON only in memory. Enter the public app base URL (use `http://localhost:8000` for local testing). It can also configure GitHub and Facebook: enter each provider's Client ID and its hidden Client Secret when prompted; leave the ID empty to skip that provider. For a deployed site, use its HTTPS URL as the base and register the matching HTTPS callback URLs below.
 
 For local development, register these exact redirect URIs:
 
@@ -29,6 +35,8 @@ Required provider permissions:
 - Facebook: email and public profile
 
 Create or join a mess with the regular registration form first. Then sign in with the account's Mess ID, User ID/phone, and password. From the dashboard, use **Connect a social sign-in** to link the provider to that account. Once linked, the provider can be used from the main sign-in page. For security, a social profile alone cannot create a manager or member account, join a mess, or grant dashboard access.
+
+Google currently starts in **Testing** mode: only Google accounts listed as test users can sign in. Add each intended tester in **Google Auth Platform -> Audience -> Add users**. Making Google sign-in available to the general public requires a public HTTPS site and any Google verification required for the consent screen and scopes; localhost testing does not publish the app.
 
 ## Local Dashboard Login
 

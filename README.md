@@ -23,7 +23,7 @@ The dashboard is served from `index.html`; opening it without a valid session re
 
 ## Optional services
 
-- Social sign-in: follow [oauth-setup.md](./oauth-setup.md) to create provider apps and use the interactive `start-with-oauth.ps1` launcher. Then connect a provider from inside the signed-in dashboard. Do not put real credentials in source files.
+- Social sign-in: follow [oauth-setup.md](./oauth-setup.md) to create provider apps and use the interactive `start-with-oauth.ps1` launcher. Then connect a provider from inside the signed-in dashboard. Keep client credentials out of the repository.
 - SMS password recovery: follow [sms-setup.md](./sms-setup.md) and configure Twilio credentials in the same PowerShell session used to start PHP.
 
 ## Data handling

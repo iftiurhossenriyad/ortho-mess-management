@@ -24,6 +24,30 @@ if ($baseUri.Scheme -ne 'https' -and $baseUri.Host -notin @('localhost', '127.0.
     throw 'Social sign-in requires HTTPS outside localhost.'
 }
 
+$googleClientFile = Join-Path $env:LOCALAPPDATA 'OrthoMessManagement\credentials\google-client.json'
+if (-not (Test-Path -LiteralPath $googleClientFile -PathType Leaf)) {
+    $googleClientFile = (Read-Host 'Google OAuth client JSON file path').Trim('"', ' ')
+}
+if (-not (Test-Path -LiteralPath $googleClientFile -PathType Leaf)) {
+    throw 'The Google OAuth client JSON file was not found.'
+}
+
+try {
+    $googleClient = Get-Content -LiteralPath $googleClientFile -Raw | ConvertFrom-Json
+    $googleWebClient = $googleClient.web
+} catch {
+    throw 'The Google OAuth client file is not valid JSON.'
+}
+
+$googleCallback = "$($env:OAUTH_BASE_URL)/oauth.php?provider=google"
+if ([string]::IsNullOrWhiteSpace($googleWebClient.client_id) -or [string]::IsNullOrWhiteSpace($googleWebClient.client_secret) -or $googleWebClient.redirect_uris -notcontains $googleCallback) {
+    throw 'The Google OAuth JSON must contain a web client with the matching Ortho callback URI.'
+}
+
+[Environment]::SetEnvironmentVariable('OAUTH_GOOGLE_CLIENT_ID', $googleWebClient.client_id, 'Process')
+[Environment]::SetEnvironmentVariable('OAUTH_GOOGLE_CLIENT_SECRET', $googleWebClient.client_secret, 'Process')
+$configuredProviders = 1
+
 function Read-OAuthSecret([string] $Prompt) {
     $secureValue = Read-Host $Prompt -AsSecureString
     $pointer = [Runtime.InteropServices.Marshal]::SecureStringToBSTR($secureValue)
@@ -36,11 +60,9 @@ function Read-OAuthSecret([string] $Prompt) {
 }
 
 $providers = @(
-    @{ Name = 'Google'; Prefix = 'OAUTH_GOOGLE'; AppIdPrompt = 'Google OAuth Client ID (leave empty to skip)' },
     @{ Name = 'GitHub'; Prefix = 'OAUTH_GITHUB'; AppIdPrompt = 'GitHub OAuth Client ID (leave empty to skip)' },
     @{ Name = 'Facebook'; Prefix = 'OAUTH_FACEBOOK'; AppIdPrompt = 'Facebook App ID (leave empty to skip)' }
 )
-$configuredProviders = 0
 
 foreach ($provider in $providers) {
     $clientId = (Read-Host $provider.AppIdPrompt).Trim()
