@@ -15,7 +15,19 @@ mysqli_report(MYSQLI_REPORT_OFF);
 $conn = mysqli_init();
 
 if (!$is_local) {
-    mysqli_ssl_set($conn, NULL, NULL, NULL, NULL, NULL);
+    $caFile = getenv('ORTHO_DB_CA_CERT');
+    if (!$caFile || !is_file($caFile) || !is_readable($caFile)) {
+        http_response_code(500);
+        echo json_encode(["status" => "error", "message" => "Remote database TLS requires ORTHO_DB_CA_CERT to point to a readable trusted CA certificate."]);
+        exit();
+    }
+
+    if (!mysqli_ssl_set($conn, NULL, NULL, $caFile, NULL, NULL)
+        || !mysqli_options($conn, MYSQLI_OPT_SSL_VERIFY_SERVER_CERT, true)) {
+        http_response_code(500);
+        echo json_encode(["status" => "error", "message" => "Remote database TLS certificate verification could not be configured."]);
+        exit();
+    }
 }
 
 // Connect to local XAMPP MySQL by default, or Aiven when ORTHO_DB_HOST is set.

@@ -32,4 +32,4 @@ The application database starts empty. Only messes and accounts created through 
 
 ## Deployment
 
-The PHP built-in server and the included XAMPP launcher are for local development only. For public hosting, use a production PHP web server with HTTPS, set database and provider credentials in the hosting environment, and restrict database access to the application host. Never commit `.env` files, credentials, private keys, database exports, or user data.
+The PHP built-in server and the included XAMPP launcher are for local development only. For public hosting, use a production PHP web server with HTTPS, set database and provider credentials in the hosting environment, and restrict database access to the application host. For remote MySQL, also set `ORTHO_DB_CA_CERT` to the path of a readable trusted CA certificate file; remote connections fail closed if it is missing, unreadable, or certificate verification cannot be enabled. Localhost/XAMPP connections do not require this variable. Never commit `.env` files, credentials, private keys, database exports, or user data.
